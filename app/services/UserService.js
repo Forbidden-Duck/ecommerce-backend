@@ -1,6 +1,7 @@
 const UserSchema = require("../db/schemas/users");
 const createError = require("http-errors");
-const Mongo, { createID } = require("../db");
+const Mongo = require("../db");
+const { createID } = require("../db"); // Fixes typings breaking
 const date = require("../db/date");
 
 module.exports = class UserService {
@@ -59,7 +60,13 @@ module.exports = class UserService {
         } catch (err) {
             throw createError(500, err.message);
         }
-        return userObj;
+
+        // Get the updated user
+        const updatedUser = await this.find({ _id: userObj._id });
+        if (!updatedUser) {
+            throw createError(500, "Internal Server Error");
+        }
+        return updatedUser;
     }
 
     /**
