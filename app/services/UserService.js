@@ -1,5 +1,4 @@
 const UserSchema = require("../db/schemas/users");
-const sanitize = require("mongo-sanitize");
 const createError = require("http-errors");
 const Mongo = require("../db");
 const date = require("../db/date");
@@ -25,7 +24,7 @@ module.exports = class UserService {
 
         // Create the user
         try {
-            await this.MongoDB.insert("users", userObj._id, sanitize(userObj), true);
+            await this.MongoDB.insert("users", userObj._id, userObj, true);
         } catch (err) {
             throw createError(500, err.message);
         }
@@ -54,7 +53,7 @@ module.exports = class UserService {
 
         // Update user
         try {
-            await this.MongoDB.update("users", { _id: userObj._id }, { $set: sanitize(userObj) });
+            await this.MongoDB.update("users", { _id: userObj._id }, { $set: userObj });
         } catch (err) {
             throw createError(500, err.message);
         }
@@ -68,7 +67,7 @@ module.exports = class UserService {
      */
     async find(data) {
         try {
-            return (await this.MongoDB.find("users", sanitize(data), { limit: 1 }))[0];
+            return (await this.MongoDB.find("users", data, { limit: 1 }))[0];
         } catch (err) {
             throw createError(404, "User not found");
         }
