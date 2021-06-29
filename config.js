@@ -8,5 +8,12 @@ module.exports = {
             password: process.env.DBPASSWORD
         }
     },
-    STRIPE: process.env.SKSECRET
+    STRIPE: process.env.SKSECRET,
+    CRYPTO: {
+        cfg: {
+            keySize: 512 / 32,
+            iterations: 10000,
+            mode: CryptoJS.mode.OFB
+        }
+    }
 }
