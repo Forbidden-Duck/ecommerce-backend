@@ -64,7 +64,7 @@ module.exports = class UserService {
         // Get the updated user
         const updatedUser = await this.find({ _id: userObj._id });
         if (!updatedUser) {
-            throw createError(500, "Internal Server Error");
+            throw createError(503, "Internal Server Error");
         }
         return updatedUser;
     }
