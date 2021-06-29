@@ -14,6 +14,7 @@ module.exports = {
             keySize: 512 / 32,
             iterations: 10000,
             mode: CryptoJS.mode.OFB
-        }
+        },
+        jwtkey: process.env.JWTKEY
     }
 }
