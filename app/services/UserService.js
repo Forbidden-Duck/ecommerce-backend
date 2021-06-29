@@ -1,6 +1,6 @@
 const UserSchema = require("../db/schemas/users");
 const createError = require("http-errors");
-const Mongo = require("../db");
+const Mongo, { createID } = require("../db");
 const date = require("../db/date");
 
 module.exports = class UserService {
@@ -18,6 +18,8 @@ module.exports = class UserService {
      * @returns {UserSchema}
      */
     async create(userObj) {
+        // Create ID
+        userObj._id = createID();
         // Set createdAt & modifiedAt
         userObj.createdAt = date();
         userObj.modifiedAt = 0;
