@@ -1,8 +1,8 @@
 const Mongo = require("../db");
 const { DB } = require("../../config");
 
-// TODO Auth service require("../services/AuthService")
-// TODO User service require("../services/UserService")
+const AuthService = require("../services/AuthService");
+const UserService = require("../services/UserService");
 // TODO Product service require("../services/ProductService")
 // TODO Order service require("../services/OrderService")
 // TODO Cart service require("../services/CartService")
@@ -12,12 +12,12 @@ module.exports = async () => {
      * @type {Mongo}
      */
     const MongoDB = await (new Mongo(DB))();
-    // TODO Create a new user service
+    const user = new UserService(MongoDB); // Auth service requires this service
     return {
         client: MongoDB,
         services: {
-            auth: undefined, // TODO Add auth service
-            user: undefined, // TODO Add user service
+            auth: new AuthService(MongoDB, user),
+            user: user,
             product: undefined, // TODO Add product service
             order: undefined, // TODO Add order service
             cart: undefined // TODO Add cart service
