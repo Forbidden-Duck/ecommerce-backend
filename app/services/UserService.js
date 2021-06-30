@@ -55,7 +55,8 @@ module.exports = class UserService {
 
     /**
      * Update user data
-     * @param {UserSchema} userObj 
+     * @param {UserSchema} userObj
+     * @returns {UserSchema}
      */
     async update(userObj) {
         // Check if user exists
@@ -80,5 +81,28 @@ module.exports = class UserService {
             throw createError(500, "Internal Server Error");
         }
         return updatedUser;
+    }
+
+    /**
+     * Delete a user
+     * @param {string} userID
+     * @returns {boolean}
+     */
+    async delete(userID) {
+        // Check if user exists
+        const user = await this.find({ _id: userObj._id });
+        if (!user || user._id === undefined) {
+            throw createError(404, "User not found");
+        }
+
+        // Delete the user
+        try {
+            await this.MongoDB.delete("products", { _id: userID });
+        } catch (err) {
+            throw createError(500, err.message);
+        }
+
+        const userDeleted = await this.find({ _id: userObj._id });
+        return !userDeleted || userDeleted._id === undefined;
     }
 }
