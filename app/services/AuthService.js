@@ -13,6 +13,7 @@ const refreshtoken = require("../crypto/refreshtoken");
 
 /**
  * @typedef {object} LoginReturn
+ * @property {UserSchema} user
  * @property {string} token
  * @property {string} refreshtoken
  * @property {Date} expiresIn
@@ -88,6 +89,7 @@ module.exports = class AuthService {
             }
 
             return {
+                user,
                 token,
                 refreshtoken: reToken,
                 expiresIn
