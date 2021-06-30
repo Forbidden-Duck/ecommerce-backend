@@ -90,7 +90,7 @@ module.exports = class UserService {
      */
     async delete(userID) {
         // Check if user exists
-        const user = await this.find({ _id: userObj._id });
+        const user = await this.find({ _id: userID });
         if (!user || user._id === undefined) {
             throw createError(404, "User not found");
         }
@@ -102,7 +102,7 @@ module.exports = class UserService {
             throw createError(500, err.message);
         }
 
-        const userDeleted = await this.find({ _id: userObj._id });
+        const userDeleted = await this.find({ _id: userID });
         return !userDeleted || userDeleted._id === undefined;
     }
 }
