@@ -5,6 +5,7 @@
  * @property {string} [password]
  * @property {string} [firstname]
  * @property {string} [lastname]
+ * @property {boolean} [admin]
  * @property {string} [createdAt]
  * @property {string} [modifiedAt]
  */
@@ -18,6 +19,7 @@ module.exports = {
     password: undefined,
     firstname: undefined,
     lastname: undefined,
+    admin: false,
     createdAt: undefined,
     modifiedAt: undefined
 };
