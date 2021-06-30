@@ -7,7 +7,7 @@ const { CRYPTO } = require("../../config");
  * @param {import("./mongodb").MongoService} MongoDB 
  */
 module.exports = (app, MongoDB) => {
-    // TODO Auth route require("../routes/auth")(app, MongoDB);
+    require("../routes/auth")(app, MongoDB);
 
     // /api Authentication
     app.use("/api", (req, res, next) => {
