@@ -71,12 +71,23 @@ describe("/auth", () => {
                 .post(`http://localhost:${PORT}/auth/register`)
                 .set("Accept", "application/json")
                 .send(sendData);
-
             expect(res.statusCode).toBe(201);
             expect(res.body).toMatchObject(checkData);
         });
         it("should add the user to the database", async () => {
             expect(await testApp.service.services.user.find({ email: sendData.email })).toMatchObject(checkData);
+        });
+        it("should remove key value pairs not on the schema", async () => {
+            checkData.badKey = "badValue";
+            sendData.badKey = "badValue";
+            const res = await superagent
+                .post(`http://localhost:${PORT}/auth/register`)
+                .set("Accept", "application/json")
+                .send(sendData);
+            expect(res.statusCode).toBe(201);
+            expect(res.body).not.toMatchObject(checkData);
+            delete sendData.badKey;
+            delete checkData.badKey; // Don't want to keep the badKey
         });
     });
 });
