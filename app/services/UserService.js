@@ -20,7 +20,7 @@ module.exports = class UserService {
      */
     async find(data) {
         try {
-            return (await this.MongoDB.find("users", data, { limit: 1 }))[0];
+            return (await this.MongoDB.find("users", data, { limit: 1 }, true))[0];
         } catch (err) {
             throw createError(404, "User not found");
         }
@@ -47,7 +47,7 @@ module.exports = class UserService {
 
         // Check user exists
         const user = await this.find({ _id: userObj._id });
-        if (!user) {
+        if (!user || user._id === undefined) {
             throw createError(500, "Could not create user");
         }
         return user;
@@ -60,7 +60,7 @@ module.exports = class UserService {
     async update(userObj) {
         // Check if user exists
         const user = await this.find({ _id: userObj._id });
-        if (!user) {
+        if (!user || user._id === undefined) {
             throw createError(404, "User not found");
         }
 
@@ -76,7 +76,7 @@ module.exports = class UserService {
 
         // Get the updated user
         const updatedUser = await this.find({ _id: userObj._id });
-        if (!updatedUser) {
+        if (!updatedUser || updatedUser._id === undefined) {
             throw createError(500, "Internal Server Error");
         }
         return updatedUser;

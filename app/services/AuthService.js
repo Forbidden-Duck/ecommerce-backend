@@ -35,7 +35,7 @@ module.exports = class AuthService {
      * @returns {RefreshTokenSchema}
      */
     async getRefreshToken(reTokenCookie) {
-        return (await this.MongoDB.find("refresh_tokens", { _id: reTokenCookie }, { limit: 1 }))[0];
+        return (await this.MongoDB.find("refresh_tokens", { _id: reTokenCookie }, { limit: 1 }, true))[0];
     }
 
     /**
@@ -46,7 +46,7 @@ module.exports = class AuthService {
     async register(userObj) {
         // Check if user already exists
         const user = this.UserService.find({ email: userObj.email });
-        if (!user) {
+        if (!user || user._id === undefined) {
             throw createError(409, "Email already in use");
         }
 
@@ -65,7 +65,7 @@ module.exports = class AuthService {
     async login(email, password) {
         // Check if the user exists
         const user = this.UserService.find({ email: userObj.email });
-        if (!user) {
+        if (!user || user._id === undefined) {
             throw createError(404, "User not found");
         }
 
@@ -82,7 +82,7 @@ module.exports = class AuthService {
 
             // Insert refresh token
             try {
-                this.MongoDB.insert("refresh_tokens", reToken, { userid: user._id, createdAt: date() });
+                this.MongoDB.insert("refresh_tokens", reToken, { userid: user._id, createdAt: date() }, true);
             } catch (err) {
                 throw createError(500, "Internal Server Error");
             }
@@ -102,7 +102,7 @@ module.exports = class AuthService {
     async logout(refreshTokenObj) {
         // Check if the user exists
         const user = this.UserService.find({ _id: refreshTokenObj.userid });
-        if (!user) {
+        if (!user || user._id === undefined) {
             throw createError(404, "User not found");
         }
 
@@ -122,7 +122,7 @@ module.exports = class AuthService {
     async refresh_token(refreshTokenObj) {
         // Check if the user exists
         const user = this.UserService.find({ _id: refreshTokenObj.userid });
-        if (!user) {
+        if (!user || user._id === undefined) {
             throw createError(404, "User not found");
         }
 
@@ -144,7 +144,7 @@ module.exports = class AuthService {
 
         // Insert refresh token
         try {
-            this.MongoDB.insert("refresh_tokens", newReToken, { userid: user._id, createdAt: date() });
+            this.MongoDB.insert("refresh_tokens", newReToken, { userid: user._id, createdAt: date() }, true);
         } catch (err) {
             throw createError(500, "Internal Server Error");
         }
