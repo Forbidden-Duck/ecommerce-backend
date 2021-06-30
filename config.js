@@ -1,5 +1,6 @@
 const CryptoJS = require("crypto-js");
 
+process.env.NODE_ENV = process.env.NODE_ENV || process.env.ENV;
 module.exports = {
     PORT: process.env.PORT,
     DB: {
