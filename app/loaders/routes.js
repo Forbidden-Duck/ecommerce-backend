@@ -7,6 +7,8 @@ const { CRYPTO } = require("../../config");
  * @param {import("./mongodb").MongoService} MongoDB 
  */
 module.exports = (app, MongoDB) => {
+    // TODO Auth route require("../routes/auth")(app, MongoDB);
+
     // /api Authentication
     app.use("/api", (req, res, next) => {
         // Check if the cookie exists
@@ -25,8 +27,6 @@ module.exports = (app, MongoDB) => {
             next();
         });
     });
-
-    // TODO Auth route require("../routes/auth")(app, MongoDB);
     // TODO User route require("../routes/user")(app, MongoDB);
     // TODO Product route require("../routes/product")(app, MongoDB);
     // TODO Order route require("../routes/order")(app, MongoDB);
