@@ -11,4 +11,5 @@ module.exports = async app => {
         status = status || 500;
         return res.status(status).send({ message });
     });
+    return MongoDB;
 };

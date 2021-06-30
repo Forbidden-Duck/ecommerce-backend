@@ -1,3 +1,5 @@
+const CryptoJS = require("crypto-js");
+
 module.exports = {
     PORT: process.env.PORT,
     DB: {
@@ -17,4 +19,4 @@ module.exports = {
         },
         jwtkey: process.env.JWTKEY
     }
-}
+};
