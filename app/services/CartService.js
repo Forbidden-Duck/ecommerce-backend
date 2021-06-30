@@ -68,7 +68,9 @@ module.exports = class CartService {
      */
     async create(cartObj) {
         // Create ID without overriding existing one
-        cartObj = Object.assign({ _id: createID() }, cartObj);
+        if (cartObj._id === undefined) {
+            cartObj._id = createID();
+        }
         // Set createdAt & modifiedAt
         cartObj.createdAt = date();
         cartObj.modifiedAt = 0;

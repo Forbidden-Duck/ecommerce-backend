@@ -5,8 +5,8 @@ const app = require("express")();
 const loaders = require("./loaders");
 const { PORT } = require("../config");
 
-(() => {
-    loaders(app);
+(async () => {
+    await loaders(app);
     app.listen(PORT, err => {
         if (err) {
             console.log("Error while listening for connections\n", err);

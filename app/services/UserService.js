@@ -33,7 +33,9 @@ module.exports = class UserService {
      */
     async create(userObj) {
         // Create ID without overriding existing one
-        userObj = Object.assign({ _id: createID() }, userObj);
+        if (userObj._id === undefined) {
+            userObj._id = createID();
+        }
         // Set createdAt & modifiedAt
         userObj.createdAt = date();
         userObj.modifiedAt = 0;

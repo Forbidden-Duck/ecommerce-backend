@@ -86,7 +86,7 @@ module.exports = class MongoDB {
                 delete data[key];
             }
         }
-        return Object.assign(schema, obj);
+        return Object.assign(schema, data);
     }
 
     /** 

@@ -70,7 +70,9 @@ module.exports = class OrderService {
      */
     async create(orderObj) {
         // Create ID without overriding existing one
-        orderObj = Object.assign({ _id: createID() }, orderObj);
+        if (orderObj._id === undefined) {
+            orderObj._id = createID();
+        }
         // Set createdAt & modifiedAt
         orderObj.createdAt = date();
         orderObj.modifiedAt = 0;

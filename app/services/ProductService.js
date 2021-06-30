@@ -46,7 +46,9 @@ module.exports = class ProductService {
      */
     async create(productObj) {
         // Create ID without overriding existing one
-        productObj = Object.assign({ _id: createID() }, productObj);
+        if (productObj._id === undefined) {
+            productObj._id = createID();
+        }
         // Set createdAt & modifiedAt
         productObj.createdAt = date();
         productObj.modifiedAt = 0;

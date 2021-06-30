@@ -1,7 +1,6 @@
 const express = require("express");
 const { createID } = require("../db");
 const router = express.Router();
-const hash = require("../crypto/hash");
 
 const UserSchema = require("../db/schemas/users");
 
@@ -13,15 +12,12 @@ const UserSchema = require("../db/schemas/users");
 module.exports = (app, MongoDB) => {
     app.use("/auth", router);
 
-    const registerValidate = (req, res, next) => {
+    const registerValidate = async (req, res, next) => {
         const body = req.body;
         if (typeof body !== "object"
             || (typeof body.email !== "string" || body.email.length < 4 || body.email.length > 32)
             || typeof body.password !== "string") {
             return res.sendStatus(400);
-        }
-        if (!(await MongoDB.client.find("users", { email: body.email }, { limit: 1 }, false))[0]) {
-            return res.status(409).send("Email already registered");
         }
         next();
     };
@@ -30,12 +26,12 @@ module.exports = (app, MongoDB) => {
         // Encrypt the password
         const body = req.body;
         const userObj = MongoDB.client.documentToSchema("users", body);
-        userObj.password = hash.create(userObj.password);
         try {
             const user = await MongoDB.services.auth.register(userObj);
             delete user.password; // Don't send back the password...
             res.status(201).json(user);
         } catch (err) {
+            console.log(err.stack);
             res.status(err.status || 500).send(err.message);
         }
     });
