@@ -1,7 +1,7 @@
 // Load environment variables
 require("dotenv").config({ path: __dirname + "/../process.env" });
 
-const superagent = require("superagent");
+const supertest = require("supertest");
 const seeds = require("./seeds");
 const { PORT } = require("../config");
 const config = require("../config");
@@ -66,9 +66,18 @@ describe("/auth", () => {
     sendData.password = "password123";
 
     describe("POST /register", () => {
+        it("should respond with status 400 when missing data", async () => {
+            const tempData = Object.assign({}, sendData);
+            delete tempData.email;
+            const res = await supertest(testApp.app)
+                .post(`/auth/register`)
+                .set("Accept", "application/json")
+                .send(tempData);
+            expect(res.statusCode).toBe(400);
+        });
         it("should respond with the user", async () => {
-            const res = await superagent
-                .post(`http://localhost:${PORT}/auth/register`)
+            const res = await supertest(testApp.app)
+                .post(`/auth/register`)
                 .set("Accept", "application/json")
                 .send(sendData);
             expect(res.statusCode).toBe(201);
@@ -80,14 +89,18 @@ describe("/auth", () => {
         it("should remove key value pairs not on the schema", async () => {
             checkData.badKey = "badValue";
             sendData.badKey = "badValue";
-            const res = await superagent
-                .post(`http://localhost:${PORT}/auth/register`)
+            const res = await supertest(testApp.app)
+                .post(`/auth/register`)
                 .set("Accept", "application/json")
                 .send(sendData);
             expect(res.statusCode).toBe(201);
             expect(res.body).not.toMatchObject(checkData);
             delete sendData.badKey;
             delete checkData.badKey; // Don't want to keep the badKey
+        });
+
+        describe("POST /login", () => {
+
         });
     });
 });
