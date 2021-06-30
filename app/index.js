@@ -7,7 +7,11 @@ const { PORT } = require("../config");
 
 (() => {
     loaders(app);
-    app.listen(PORT, () => {
+    app.listen(PORT, err => {
+        if (err) {
+            console.log("Error while listening for connections\n", err);
+            process.exit(10);
+        }
         console.log(`Server listening on ${PORT}`);
     });
 })();
