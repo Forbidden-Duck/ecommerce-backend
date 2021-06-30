@@ -5,7 +5,7 @@ const AuthService = require("../services/AuthService");
 const UserService = require("../services/UserService");
 const ProductService = require("../services/ProductService");
 const OrderService = require("../services/OrderService");
-// TODO Cart service require("../services/CartService");
+const CartService = require("../services/CartService");
 
 module.exports = async () => {
     /**
@@ -21,7 +21,7 @@ module.exports = async () => {
             user: user,
             product: new ProductService(MongoDB),
             order: order,
-            cart: undefined // TODO Add cart service
+            cart: new CartService(MongoDB, order)
         }
     }
 };
