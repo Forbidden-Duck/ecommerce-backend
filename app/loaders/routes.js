@@ -13,14 +13,15 @@ module.exports = (app, MongoDB) => {
     app.use("/api", (req, res, next) => {
         // Check if the cookie exists
         const reTokenCookie = req.cookies["refresh_token"];
-        if (reTokenCookie === undefined) {
-            return res.sendStatus(403);
+        const reTokenDB = MongoDB.services.auth.getRefreshToken(reTokenCookie);
+        if (!reTokenDB || reTokenDB._id === undefined) {
+            return res.sendStatus(401);
         }
 
         // Validate the cookie
         jwt.verify(reTokenCookie, CRYPTO.jwtkey, (err, data) => {
             if (err) {
-                return res.sendStatus(403);
+                return res.sendStatus(401);
             }
             req.token = reTokenCookie;
             req.user = data;
