@@ -71,7 +71,22 @@ module.exports = class MongoDB {
     }
 
     getSchema(name) {
-        return this.schemas[name];
+        return Object.assign({}, this.schemas[name]);
+    }
+
+    documentToSchema(schemaName, data) {
+        // Mutate data
+        // Prevents unintentionally overriding the current data
+        data = Object.assign({}, data);
+        const schema = this.getSchema(schemaName);
+        const schemaKeys = Object.keys(schema);
+
+        for (const key of Object.keys(data)) {
+            if (!schemaKeys.includes(key)) {
+                delete data[key];
+            }
+        }
+        return Object.assign(schema, obj);
     }
 
     /** 
@@ -87,14 +102,14 @@ module.exports = class MongoDB {
         if (useSchema == true) {
             if (documents.length != 0) {
                 for (const documentIndex in documents) {
-                    const schema = Object.assign({}, this.getSchema(collName));
+                    const schema = this.getSchema(collName);
                     const document = documents[documentIndex];
                     if (typeof document === "object") {
                         documents[documentIndex] = Object.assign(schema, document);
                     }
                 }
             } else {
-                const schema = Object.assign({}, this.getSchema(collName));
+                const schema = this.getSchema(collName);
                 documents[0] = schema;
             }
         }
