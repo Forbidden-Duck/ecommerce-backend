@@ -32,8 +32,8 @@ module.exports = class UserService {
      * @returns {UserSchema}
      */
     async create(userObj) {
-        // Create ID
-        userObj._id = createID();
+        // Create ID without overriding existing one
+        userObj = Object.assign({ _id: createID() }, userObj);
         // Set createdAt & modifiedAt
         userObj.createdAt = date();
         userObj.modifiedAt = 0;
