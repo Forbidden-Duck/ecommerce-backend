@@ -55,7 +55,7 @@ module.exports = class OrderService {
      * @param {string} userID 
      * @returns {OrderSchema[]}
      */
-    async findItemsByUser(userID) {
+    async findOrdersByUser(userID) {
         try {
             return await this.MongoDB.find("orders", { userid: userID }, {}, true);
         } catch (err) {
@@ -65,7 +65,8 @@ module.exports = class OrderService {
 
     /**
      * Create a new order
-     * @param {OrderSchema} orderObj 
+     * @param {OrderSchema} orderObj
+     * @returns {OrderSchema}
      */
     async create(orderObj) {
         // Create ID without overriding existing one
@@ -91,7 +92,8 @@ module.exports = class OrderService {
 
     /**
      * Update order data
-     * @param {OrderSchema} orderObj 
+     * @param {OrderSchema} orderObj
+     * @returns {OrderSchema}
      */
     async update(orderObj) {
         // Check if order exists
