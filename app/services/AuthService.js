@@ -152,6 +152,7 @@ module.exports = class AuthService {
         }
 
         return {
+            user,
             token: newToken,
             refreshtoken: newReToken,
             expiresIn
