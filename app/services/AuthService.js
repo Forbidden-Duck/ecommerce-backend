@@ -84,7 +84,7 @@ module.exports = class AuthService {
             try {
                 this.MongoDB.insert("refresh_tokens", reToken, { userid: user._id, createdAt: date() });
             } catch (err) {
-                throw createError(503, "Internal Server Error");
+                throw createError(500, "Internal Server Error");
             }
 
             return {
@@ -110,7 +110,7 @@ module.exports = class AuthService {
         try {
             await this.MongoDB.delete("refresh_tokens", { _id: refreshTokenObj._id, userid: refreshTokenObj.userid });
         } catch (err) {
-            throw createError(503, "Internal Server Error");
+            throw createError(500, "Internal Server Error");
         }
     }
 
@@ -130,7 +130,7 @@ module.exports = class AuthService {
         try {
             await this.MongoDB.delete("refresh_tokens", { _id: refreshTokenObj._id, userid: refreshTokenObj.userid });
         } catch (err) {
-            throw createError(503, "Internal Server Error");
+            throw createError(500, "Internal Server Error");
         }
 
         // Create new token, refresh token and expiry
@@ -146,7 +146,7 @@ module.exports = class AuthService {
         try {
             this.MongoDB.insert("refresh_tokens", newReToken, { userid: user._id, createdAt: date() });
         } catch (err) {
-            throw createError(503, "Internal Server Error");
+            throw createError(500, "Internal Server Error");
         }
 
         return {

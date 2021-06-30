@@ -14,6 +14,19 @@ module.exports = class UserService {
     }
 
     /**
+     * Find a user
+     * @param {UserSchema} data 
+     * @returns {UserSchema}
+     */
+    async find(data) {
+        try {
+            return (await this.MongoDB.find("users", data, { limit: 1 }))[0];
+        } catch (err) {
+            throw createError(404, "User not found");
+        }
+    }
+
+    /**
      * Create a new user
      * @param {UserSchema} userObj
      * @returns {UserSchema}
@@ -64,21 +77,8 @@ module.exports = class UserService {
         // Get the updated user
         const updatedUser = await this.find({ _id: userObj._id });
         if (!updatedUser) {
-            throw createError(503, "Internal Server Error");
+            throw createError(500, "Internal Server Error");
         }
         return updatedUser;
-    }
-
-    /**
-     * Find a user
-     * @param {UserSchema} data 
-     * @returns {UserSchema}
-     */
-    async find(data) {
-        try {
-            return (await this.MongoDB.find("users", data, { limit: 1 }))[0];
-        } catch (err) {
-            throw createError(404, "User not found");
-        }
     }
 }
