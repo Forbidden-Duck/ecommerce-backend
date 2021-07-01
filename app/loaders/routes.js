@@ -15,7 +15,7 @@ module.exports = (app, MongoDB) => {
         const headerToken = req.headers["authorization"];
         if (headerToken) {
             const token = headerToken.split(" ")[1];
-            // Validate the cookie
+            // Validate the header
             jwt.verify(token, CRYPTO.jwtkey, (err, data) => {
                 if (err) {
                     return res.sendStatus(401);
