@@ -56,11 +56,10 @@ module.exports = (app, MongoDB) => {
         }
         try {
             const hasDelete = await MongoDB.services.user.delete(req.user._id);
-            if (hasDelete) {
-                return res.sendStatus(204)
-            } else {
+            if (!hasDelete) {
                 return res.status(500).send("Failed to delete user");
             }
+            res.sendStatus(204);
         } catch (err) {
             res.status(err.status || 500).send(err.message);
         }
