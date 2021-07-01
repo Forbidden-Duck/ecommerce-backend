@@ -94,6 +94,8 @@ module.exports = class AuthService {
                 refreshtoken: reToken,
                 expiresIn
             };
+        } else {
+            throw createError(401, "Unauthorized");
         }
     }
 
