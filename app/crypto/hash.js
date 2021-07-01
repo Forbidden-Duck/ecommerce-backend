@@ -22,6 +22,6 @@ module.exports.create = password => {
 module.exports.compare = (password, salthash) => {
     const cfg = CRYPTO.cfg;
     const salt = salthash.substring(0, 256);
-    const hash = salt.substr(256);
+    const hash = salthash.substr(256);
     return hash === cryptojs.PBKDF2(password, salt, cfg).toString();
 };

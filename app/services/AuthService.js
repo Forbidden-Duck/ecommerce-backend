@@ -79,7 +79,7 @@ module.exports = class AuthService {
                 { algorithm: "HS256", expiresIn: "15m" }
             );
             const reToken = refreshtoken.create(user._id);
-            const expiresIn = new Date(Date.now + 900000) // 15 minutes
+            const expiresIn = new Date(Date.now() + 900000) // 15 minutes
 
             // Insert refresh token
             try {
@@ -144,7 +144,7 @@ module.exports = class AuthService {
             { algorithm: "HS256", expiresIn: "15m" }
         );
         const newReToken = refreshtoken.create(user._id);
-        const expiresIn = new Date(Date.now + 900000) // 15 minutes
+        const expiresIn = new Date(Date.now() + 900000) // 15 minutes
 
         // Insert refresh token
         try {
