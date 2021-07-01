@@ -55,7 +55,7 @@ module.exports = (app, MongoDB) => {
             res.cookie("refresh_token", loginObj.refreshtoken, {
                 maxAge: 2.592e+9, // 30 days
                 httpOnly: true,
-                secure: process.env.NODE_ENV === "production" ? true : false,
+                secure: process.env.NODE_ENV === "production",
             });
             res.status(200).json({
                 userid: loginObj.user._id,
