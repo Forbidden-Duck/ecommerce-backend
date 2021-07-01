@@ -11,22 +11,21 @@ module.exports = (app, MongoDB) => {
 
     // /api Authentication
     app.use("/api", (req, res, next) => {
-        // Check if the cookie exists
-        const reTokenCookie = req.cookies["refresh_token"];
-        const reTokenDB = MongoDB.services.auth.getRefreshToken(reTokenCookie);
-        if (!reTokenDB || reTokenDB._id === undefined) {
-            return res.sendStatus(401);
+        // Check if the header exists
+        const headerToken = req.headers["authorization"];
+        if (headerToken) {
+            // Validate the cookie
+            jwt.verify(reTokenCookie, CRYPTO.jwtkey, (err, data) => {
+                if (err) {
+                    return res.sendStatus(401);
+                }
+                req.token = reTokenCookie;
+                req.user = data;
+                next();
+            });
+        } else {
+            res.sendStatus(400);
         }
-
-        // Validate the cookie
-        jwt.verify(reTokenCookie, CRYPTO.jwtkey, (err, data) => {
-            if (err) {
-                return res.sendStatus(401);
-            }
-            req.token = reTokenCookie;
-            req.user = data;
-            next();
-        });
     });
     // TODO User route require("../routes/user")(app, MongoDB);
     // TODO Product route require("../routes/product")(app, MongoDB);
