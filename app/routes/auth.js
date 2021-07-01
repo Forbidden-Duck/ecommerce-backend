@@ -31,7 +31,6 @@ module.exports = (app, MongoDB) => {
             delete user.password; // Don't send back the password...
             res.status(201).json(user);
         } catch (err) {
-            console.log(err.stack);
             res.status(err.status || 500).send(err.message);
         }
     });
