@@ -74,7 +74,7 @@ module.exports = class MongoDB {
         return Object.assign({}, this.schemas[name]);
     }
 
-    documentToSchema(schemaName, data) {
+    documentToSchema(schemaName, data, noUndefined) {
         // Mutate data
         // Prevents unintentionally overriding the current data
         data = Object.assign({}, data);
@@ -85,6 +85,10 @@ module.exports = class MongoDB {
             if (!schemaKeys.includes(key)) {
                 delete data[key];
             }
+        }
+
+        if (noUndefined) {
+            return data;
         }
         return Object.assign(schema, data);
     }
