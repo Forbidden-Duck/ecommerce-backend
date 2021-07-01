@@ -99,7 +99,7 @@ module.exports = class UserService {
 
         // Delete the user
         try {
-            await this.MongoDB.delete("products", { _id: userID });
+            await this.MongoDB.delete("users", { _id: userID });
         } catch (err) {
             throw createError(500, err.message);
         }
