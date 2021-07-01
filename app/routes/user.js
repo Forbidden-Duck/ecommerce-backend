@@ -10,7 +10,7 @@ const UserSchema = require("../db/schemas/users");
  * @param {import("../loaders/mongodb").MongoService} MongoDB 
  */
 module.exports = (app, MongoDB) => {
-    app.use("/user", router);
+    app.use("/api/user", router);
 
     router.param("userid", async (req, res, next, userid) => {
         try {
@@ -29,7 +29,7 @@ module.exports = (app, MongoDB) => {
         res.status(200).send(req.user);
     });
 
-    router.put("/:userid", (req, res, next) => {
+    router.put("/:userid", async (req, res, next) => {
         const body = req.body;
         const userObj = MongoDB.client.documentToSchema("users", body, true); // Remove bad fields
         userObj._id = req.user._id; // Ensure the _id exists
@@ -42,7 +42,7 @@ module.exports = (app, MongoDB) => {
         }
     });
 
-    router.delete("/:userid", (req, res, next) => {
+    router.delete("/:userid", async (req, res, next) => {
         try {
             await MongoDB.services.user.delete(req.user._id);
             res.sendStatus(200);

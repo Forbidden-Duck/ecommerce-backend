@@ -26,11 +26,9 @@ module.exports.clearDB = async (MongoDB) => {
  * Seed users
  * @param {Mongo} MongoDB 
  */
-module.exports.users = MongoDB => {
-    // TODO User seeds
-};
-
-// TODO Product seeds
+module.exports.products = MongoDB => {
+    // TODO Product seeds
+}
 
 // TODO Order seeds
 

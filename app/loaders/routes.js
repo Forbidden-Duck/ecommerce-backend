@@ -28,7 +28,7 @@ module.exports = (app, MongoDB) => {
             res.sendStatus(400);
         }
     });
-    // TODO User route require("../routes/user")(app, MongoDB);
+    require("../routes/user")(app, MongoDB);
     // TODO Product route require("../routes/product")(app, MongoDB);
     // TODO Order route require("../routes/order")(app, MongoDB);
     // TODO Cart route require("../routes/cart")(app, MongoDB);

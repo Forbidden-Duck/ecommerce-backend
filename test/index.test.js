@@ -48,10 +48,25 @@ let testApp; // So we can close the connection
  */
 let request; // Persist cookies
 /**
+ * User created
+ * @type {import("../app/db/schemas/users")}
+ */
+let user;
+/**
  * Used for /api routes
  * @type {string}
  */
 let jwttoken;
+
+// Used to check a user
+const checkData = { // Password is either encrypted or removed
+    email: "SomeWeirdEmail@email.com",
+    firstname: "Super",
+    lastname: "Man"
+};
+// Used to authenticate a user
+const sendData = Object.assign({}, checkData);
+sendData.password = "password123";
 
 beforeAll(async () => {
     process.env.NODE_ENV = "test";
@@ -67,14 +82,6 @@ afterAll(async () => {
 });
 
 describe("/auth", () => {
-    const checkData = { // Password is either encrypted or removed
-        email: "SomeWeirdEmail@email.com",
-        firstname: "Super",
-        lastname: "Man"
-    };
-    const sendData = Object.assign({}, checkData);
-    sendData.password = "password123";
-    let user;
     let refreshtoken;
 
     describe("POST /register", () => {
@@ -204,7 +211,30 @@ describe("/auth", () => {
 });
 
 describe("User routes", () => {
-    // TODO User Routes
+    it("should respond with 401 when an unauthorized user makes a request", async () => {
+        const res = await supertest(testApp.app)
+            .get("/api/user")
+            .set("authorization", "Bearer notatoken")
+            .send();
+        expect(res.statusCode).toBe(401);
+    });
+    describe("GET /:userid", () => {
+        it("should respond with 404 if an invalid user was provided", async () => {
+            const res = await supertest(testApp.app)
+                .get("/api/user/notauserid")
+                .set("authorization", `Bearer ${jwttoken}`)
+                .send();
+            expect(res.statusCode).toBe(404);
+        });
+        it("should send back the user", async () => {
+            const res = await supertest(testApp.app)
+                .get(`/api/user/${user._id}`)
+                .set("authorization", `Bearer ${jwttoken}`)
+                .send();
+            expect(res.statusCode).toBe(200);
+            expect(res.body).toMatchObject(checkData);
+        });
+    });
 });
 
 describe("Product routes", () => {
