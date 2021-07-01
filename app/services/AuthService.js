@@ -125,7 +125,7 @@ module.exports = class AuthService {
      */
     async refresh_token(refreshTokenObj) {
         // Check if the user exists
-        const user = this.UserService.find({ _id: refreshTokenObj.userid });
+        const user = await this.UserService.find({ _id: refreshTokenObj.userid });
         if (!user || user._id === undefined) {
             throw createError(404, "User not found");
         }
