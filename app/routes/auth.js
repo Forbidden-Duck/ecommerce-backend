@@ -1,6 +1,7 @@
 const express = require("express");
 const { createID } = require("../db");
 const router = express.Router();
+const sanitize = require("mongo-sanitize");
 
 const UserSchema = require("../db/schemas/users");
 
@@ -24,7 +25,7 @@ module.exports = (app, MongoDB) => {
     router.post("/register", registerValidate, async (req, res) => {
         // Convert the body to the user schema
         // Encrypt the password
-        const body = req.body;
+        const body = sanitize(req.body);
         const userObj = MongoDB.client.documentToSchema("users", body);
         try {
             const user = await MongoDB.services.auth.register(userObj);

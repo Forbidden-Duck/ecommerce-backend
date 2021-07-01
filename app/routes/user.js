@@ -1,6 +1,7 @@
 const express = require("express");
 const { createID } = require("../db");
 const router = express.Router();
+const sanitize = require("mongo-sanitize");
 
 const UserSchema = require("../db/schemas/users");
 
@@ -30,7 +31,7 @@ module.exports = (app, MongoDB) => {
     });
 
     router.put("/:userid", async (req, res, next) => {
-        const body = req.body;
+        const body = sanitize(req.body);
         const userObj = MongoDB.client.documentToSchema("users", body, true); // Remove bad fields
         userObj._id = req.user._id; // Ensure the _id exists
         try {
