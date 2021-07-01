@@ -65,7 +65,7 @@ module.exports = class AuthService {
      */
     async login(email, password) {
         // Check if the user exists
-        const user = this.UserService.find({ email: userObj.email });
+        const user = await this.UserService.find({ email });
         if (!user || user._id === undefined) {
             throw createError(404, "User not found");
         }
