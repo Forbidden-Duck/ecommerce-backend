@@ -7,6 +7,7 @@ const { CRYPTO } = require("../../config");
  * @param {import("./mongodb").MongoService} MongoDB 
  */
 module.exports = (app, MongoDB) => {
+    // TODO Implement Admin abilities
     require("../routes/auth")(app, MongoDB);
 
     // /api Authentication
@@ -21,7 +22,7 @@ module.exports = (app, MongoDB) => {
                     return res.sendStatus(401);
                 }
                 req.token = token;
-                req.user = data;
+                req.tokenData = data;
                 next();
             });
         } else {

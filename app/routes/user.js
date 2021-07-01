@@ -44,6 +44,9 @@ module.exports = (app, MongoDB) => {
     });
 
     router.delete("/:userid", async (req, res, next) => {
+        if (req.tokenData.userid !== req.user._id) {
+            res.status(403).send("Can't delete other users");
+        }
         try {
             await MongoDB.services.user.delete(req.user._id);
             res.sendStatus(200);
