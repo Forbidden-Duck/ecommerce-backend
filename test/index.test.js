@@ -211,6 +211,27 @@ describe("/auth", () => {
 });
 
 describe("User routes", () => {
+    const newData = {
+        email: "Batman@wayneind.com",
+        firstname: "Bat",
+        lastname: "man"
+    };
+    let newUser;
+    let newJwtToken;
+
+    beforeAll(async () => { // Create a new user to edit and delete
+        const regRes = await supertest(testApp.app)
+            .post("/auth/register")
+            .set("Accept", "application/json")
+            .send({ ...newData, password: "password123" });
+        const logRes = await supertest(testApp.app)
+            .post("/auth/login")
+            .set("Accept", "application/json")
+            .send({ ...newData, password: "password123" });
+        newUser = regRes.body;
+        newJwtToken = logRes.body.token;
+    });
+
     it("should respond with 401 when an unauthorized user makes a request", async () => {
         const res = await supertest(testApp.app)
             .get("/api/user")
@@ -238,12 +259,6 @@ describe("User routes", () => {
     });
 
     describe("PUT /:userid", () => {
-        const updateData = {
-            email: "MyNewWeirdEmail@email.com",
-            firstname: "Mush",
-            lastname: "room"
-        };
-
         it("should respond with 404 if an invalid user was provided", async () => {
             const res = await supertest(testApp.app)
                 .put("/api/user/notauserid")
@@ -251,16 +266,23 @@ describe("User routes", () => {
                 .send();
             expect(res.statusCode).toBe(404);
         });
+        it("should respond with 403 when trying to edit other users", async () => {
+            const res = await supertest(testApp.app)
+                .put(`/api/user/${user._id}`)
+                .set("authorization", `Bearer ${newJwtToken}`)
+                .send();
+            expect(res.statusCode).toBe(403);
+        });
         it("should send back the new user object", async () => {
             const res = await supertest(testApp.app)
                 .put(`/api/user/${user._id}`)
                 .set("authorization", `Bearer ${jwttoken}`)
-                .send(updateData);
+                .send(newData);
             expect(res.statusCode).toBe(200);
-            expect(res.body).toMatchObject(updateData);
+            expect(res.body).toMatchObject(newData);
         });
         it("should update the database with the new data", async () => {
-            expect(await testApp.service.services.user.find({ _id: user._id })).toMatchObject(updateData);
+            expect(await testApp.service.services.user.find({ _id: user._id })).toMatchObject(newData);
         });
 
         afterAll(async () => {
@@ -272,27 +294,6 @@ describe("User routes", () => {
     });
 
     describe("DELETE /:userid", () => {
-        const newData = {
-            email: "Batman@wayneind.com",
-            firstname: "Bat",
-            lastname: "man"
-        };
-        let newUser;
-        let newJwtToken;
-
-        beforeAll(async () => { // Create a new user to delete
-            const regRes = await supertest(testApp.app)
-                .post("/auth/register")
-                .set("Accept", "application/json")
-                .send({ ...newData, password: "password123" });
-            const logRes = await supertest(testApp.app)
-                .post("/auth/login")
-                .set("Accept", "application/json")
-                .send({ ...newData, password: "password123" });
-            newUser = regRes.body;
-            newJwtToken = logRes.body.token;
-        });
-
         it("should respond with 404 if an invalid user was provided", async () => {
             const res = await supertest(testApp.app)
                 .put("/api/user/notauserid")

@@ -31,7 +31,14 @@ module.exports = (app, MongoDB) => {
     });
 
     router.put("/:userid", async (req, res, next) => {
+        if (req.tokenData.userid !== req.user._id) {
+            return res.status(403).send("Can't edit other users");
+        }
+
         const body = sanitize(req.body);
+        delete body.createdAt;
+        delete body.modifiedAt; // Do not allow overriding of these
+
         const userObj = MongoDB.client.documentToSchema("users", body, true); // Remove bad fields
         userObj._id = req.user._id; // Ensure the _id exists
         try {
