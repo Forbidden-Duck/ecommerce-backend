@@ -14,12 +14,13 @@ module.exports = (app, MongoDB) => {
         // Check if the header exists
         const headerToken = req.headers["authorization"];
         if (headerToken) {
+            const token = headerToken.split(" ")[1];
             // Validate the cookie
-            jwt.verify(reTokenCookie, CRYPTO.jwtkey, (err, data) => {
+            jwt.verify(token, CRYPTO.jwtkey, (err, data) => {
                 if (err) {
                     return res.sendStatus(401);
                 }
-                req.token = reTokenCookie;
+                req.token = token;
                 req.user = data;
                 next();
             });
