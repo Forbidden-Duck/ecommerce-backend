@@ -43,15 +43,25 @@ const app = async () => {
  * @type {app}
  */
 let testApp; // So we can close the connection
+/**
+ * @type {import("supertest").SuperAgentTest}
+ */
+let request; // Persist cookies
+/**
+ * Used for /api routes
+ * @type {string}
+ */
+let jwttoken;
 
 beforeAll(async () => {
     process.env.NODE_ENV = "test";
     testApp = await app();
+    request = supertest.agent(testApp.app);
     await seeds.clearDB(testApp.service.client); // Clear database before
 });
 
 afterAll(async () => {
-    await seeds.clearDB(testApp.service.client); // Clear database after
+    //await seeds.clearDB(testApp.service.client); // Clear database after
     testApp.server.close();
     testApp.service.client.client.close();
 });
@@ -64,43 +74,131 @@ describe("/auth", () => {
     };
     const sendData = Object.assign({}, checkData);
     sendData.password = "password123";
+    let user;
+    let refreshtoken;
 
     describe("POST /register", () => {
         it("should respond with status 400 when missing data", async () => {
-            const tempData = Object.assign({}, sendData);
-            delete tempData.email;
             const res = await supertest(testApp.app)
-                .post(`/auth/register`)
+                .post("/auth/register")
                 .set("Accept", "application/json")
-                .send(tempData);
+                .send({});
             expect(res.statusCode).toBe(400);
         });
         it("should respond with the user", async () => {
             const res = await supertest(testApp.app)
-                .post(`/auth/register`)
+                .post("/auth/register")
                 .set("Accept", "application/json")
                 .send(sendData);
             expect(res.statusCode).toBe(201);
             expect(res.body).toMatchObject(checkData);
+            user = res.body;
         });
         it("should add the user to the database", async () => {
             expect(await testApp.service.services.user.find({ email: sendData.email })).toMatchObject(checkData);
         });
         it("should remove key value pairs not on the schema", async () => {
-            checkData.badKey = "badValue";
-            sendData.badKey = "badValue";
+            const tempData = Object.assign({}, sendData);
+            delete tempData.email;
             const res = await supertest(testApp.app)
-                .post(`/auth/register`)
+                .post("/auth/register")
+                .set("Accept", "application/json")
+                // Need a new email
+                .send({ ...tempData, email: "AnotherWeirdEmail@email.com", badKey: "badValue" });
+            expect(res.statusCode).toBe(201);
+            expect(res.body).not.toMatchObject({ ...checkData, badKey: "badValue" });
+        });
+    });
+
+    describe("POST /login", () => {
+        it("should respond with status 400 when missing data", async () => {
+            const res = await supertest(testApp.app)
+                .post("/auth/login")
+                .set("Accept", "application/json")
+                .send({});
+            expect(res.statusCode).toBe(400);
+        });
+        it("should respond with status 404 with an invalid user", async () => {
+            const res = await supertest(testApp.app)
+                .post("/auth/login")
+                .set("Accept", "application/json")
+                .send({ email: "1", password: "1" });
+            expect(res.statusCode).toBe(404);
+        });
+        it("should respond with status 401 when using incorrect password", async () => {
+            const res = await supertest(testApp.app)
+                .post("/auth/login")
+                .set("Accept", "application/json")
+                .send({ ...checkData, password: "wrongpassword123" });
+            expect(res.statusCode).toBe(401);
+        });
+        it("should respond with correct data and cookies", async () => {
+            const res = await request
+                .post("/auth/login")
                 .set("Accept", "application/json")
                 .send(sendData);
-            expect(res.statusCode).toBe(201);
-            expect(res.body).not.toMatchObject(checkData);
-            delete sendData.badKey;
-            delete checkData.badKey; // Don't want to keep the badKey
+            expect(res.statusCode).toBe(200);
+            expect(res.body).toMatchObject({ userid: user._id });
+            expect(typeof res.body.expiresIn).toBe("string");
+            expect(typeof res.body.token).toBe("string");
+            expect(typeof res.body.refreshtoken).toBe("string");
+            expect(res.headers["set-cookie"][0]).toContain("refresh_token=");
+            refreshtoken = res.body.refreshtoken;
+            jwttoken = res.body.token;
         });
+        it("should add the refreshtoken to the database", async () => {
+            expect(await testApp.service.services.auth.getRefreshToken(refreshtoken))
+                .toMatchObject({ _id: refreshtoken, userid: user._id });
+        });
+    });
 
-        describe("POST /login", () => {
+    describe("POST /refresh_token", () => {
+        const previousToken = refreshtoken;
+        it("should respond with 401 if an invalid token was provided", async () => {
+            const res = await supertest(testApp.app)
+                .post("/auth/refresh_token")
+                .send();
+            expect(res.statusCode).toBe(401);
+        });
+        it("should respond with correct data and cookies", async () => {
+            const res = await request
+                .post("/auth/refresh_token")
+                .set("Accept", "application/json")
+                .send();
+            expect(res.statusCode).toBe(200);
+            expect(res.body).toMatchObject({ userid: user._id });
+            expect(typeof res.body.expiresIn).toBe("string");
+            expect(typeof res.body.token).toBe("string");
+            expect(typeof res.body.refreshtoken).toBe("string");
+            expect(res.headers["set-cookie"][0]).toContain("refresh_token=");
+            refreshtoken = res.body.refreshtoken;
+        });
+        it("should delete previous token", async () => {
+            expect(await testApp.service.services.auth.getRefreshToken(previousToken))
+                .not.toMatchObject({ _id: previousToken, userid: user._id });
+        });
+        it("should add the new token to the database", async () => {
+            expect(await testApp.service.services.auth.getRefreshToken(refreshtoken))
+                .toMatchObject({ _id: refreshtoken, userid: user._id });
+        });
+    });
 
+    describe("POST /logout", () => {
+        it("should respond with 401 if an invalid token was provided", async () => {
+            const res = await supertest(testApp.app)
+                .post("/auth/logout")
+                .send();
+            expect(res.statusCode).toBe(401);
+        });
+        it("should respond with 200", async () => {
+            const res = await request
+                .post("/auth/logout")
+                .send();
+            expect(res.statusCode).toBe(200);
+        });
+        it("should delete the refresh_token", async () => {
+            expect(await testApp.service.services.auth.getRefreshToken(refreshtoken))
+                .not.toMatchObject({ _id: refreshtoken, userid: user._id });
         });
     });
 });
