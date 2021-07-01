@@ -321,7 +321,34 @@ describe("User routes", () => {
 });
 
 describe("Product routes", () => {
-    // TODO Product Routes
+    let products = []; // Function to populate products
+    beforeAll(async () => {
+        const tempProducts = seeds.products();
+        for (const product of tempProducts) {
+            products.push(await testApp.service.services.product.create(product));
+        }
+    });
+
+    describe("GET /", () => {
+        it("should return all products if no query is provided", async () => {
+            const res = await supertest(testApp.app)
+                .get("/api/product")
+                .set("authorization", `Bearer ${jwttoken}`)
+                .send();
+            expect(res.statusCode).toBe(200);
+            expect(res.body).toMatchObject(products);
+        });
+        it("should return products related to the query", async () => {
+            const matchProducts = products.filter(product => product.price === 15);
+            const res = await supertest(testApp.app)
+                .get("/api/product")
+                .set("authorization", `Bearer ${jwttoken}`)
+                .send({ price: 15 });
+            expect(res.statusCode).toBe(200);
+            expect(res.body.length).toBe(matchProducts.length);
+            expect(res.body).toMatchObject(matchProducts);
+        });
+    });
 });
 
 describe("Order routes", () => {

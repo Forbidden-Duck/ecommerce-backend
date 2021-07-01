@@ -23,11 +23,23 @@ module.exports.clearDB = async (MongoDB) => {
 };
 
 /**
- * Seed users
- * @param {Mongo} MongoDB 
+ * Product Seeds
+ * @returns {import("../app/db/schemas/products")[]}
  */
-module.exports.products = MongoDB => {
-    // TODO Product seeds
+module.exports.products = () => {
+    return ([{
+        name: "Hat",
+        description: "Some really cool hat you could be wearing",
+        price: 15
+    }, {
+        name: "Shirt",
+        description: "A cool looking shirt I'm wearing tonight",
+        price: 15
+    }, {
+        name: "Pants",
+        description: "Pants you wish you could afford",
+        price: 999
+    }]);
 }
 
 // TODO Order seeds
