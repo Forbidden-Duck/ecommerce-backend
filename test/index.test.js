@@ -218,6 +218,7 @@ describe("User routes", () => {
             .send();
         expect(res.statusCode).toBe(401);
     });
+
     describe("GET /:userid", () => {
         it("should respond with 404 if an invalid user was provided", async () => {
             const res = await supertest(testApp.app)
@@ -233,6 +234,87 @@ describe("User routes", () => {
                 .send();
             expect(res.statusCode).toBe(200);
             expect(res.body).toMatchObject(checkData);
+        });
+    });
+
+    describe("PUT /:userid", () => {
+        const updateData = {
+            email: "MyNewWeirdEmail@email.com",
+            firstname: "Mush",
+            lastname: "room"
+        };
+
+        it("should respond with 404 if an invalid user was provided", async () => {
+            const res = await supertest(testApp.app)
+                .put("/api/user/notauserid")
+                .set("authorization", `Bearer ${jwttoken}`)
+                .send();
+            expect(res.statusCode).toBe(404);
+        });
+        it("should send back the new user object", async () => {
+            const res = await supertest(testApp.app)
+                .put(`/api/user/${user._id}`)
+                .set("authorization", `Bearer ${jwttoken}`)
+                .send(updateData);
+            expect(res.statusCode).toBe(200);
+            expect(res.body).toMatchObject(updateData);
+        });
+        it("should update the database with the new data", async () => {
+            expect(await testApp.service.services.user.find({ _id: user._id })).toMatchObject(updateData);
+        });
+
+        afterAll(async () => {
+            const res = await supertest(testApp.app)
+                .put(`/api/user/${user._id}`)
+                .set("authorization", `Bearer ${jwttoken}`)
+                .send(checkData); // Revert back to original data
+        });
+    });
+
+    describe("DELETE /:userid", () => {
+        const newData = {
+            email: "Batman@wayneind.com",
+            firstname: "Bat",
+            lastname: "man"
+        };
+        let newUser;
+        let newJwtToken;
+
+        beforeAll(async () => { // Create a new user to delete
+            const regRes = await supertest(testApp.app)
+                .post("/auth/register")
+                .set("Accept", "application/json")
+                .send({ ...newData, password: "password123" });
+            const logRes = await supertest(testApp.app)
+                .post("/auth/login")
+                .set("Accept", "application/json")
+                .send({ ...newData, password: "password123" });
+            newUser = regRes.body;
+            newJwtToken = logRes.body.token;
+        });
+
+        it("should respond with 404 if an invalid user was provided", async () => {
+            const res = await supertest(testApp.app)
+                .put("/api/user/notauserid")
+                .set("authorization", `Bearer ${jwttoken}`)
+                .send();
+            expect(res.statusCode).toBe(404);
+        });
+        it("should respond with 403 when trying to delete other users", async () => {
+            const res = await supertest(testApp.app)
+                .delete(`/api/user/${user._id}`)
+                .set("authorization", `Bearer ${newJwtToken}`)
+                .send();
+            expect(res.statusCode).toBe(403);
+        });
+        it("should delete the user from the database", async () => {
+            const res = await supertest(testApp.app)
+                .delete(`/api/user/${newUser._id}`)
+                .set("authorization", `Bearer ${newJwtToken}`)
+                .send();
+            expect(res.statusCode).toBe(204);
+            expect(await testApp.service.services.user.find({ _id: newUser._id }))
+                .not.toMatchObject(newData);
         });
     });
 });
