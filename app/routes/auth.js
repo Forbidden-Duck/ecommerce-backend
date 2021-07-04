@@ -24,7 +24,6 @@ module.exports = (app, MongoDB) => {
     };
     router.post("/register", registerValidate, async (req, res) => {
         // Convert the body to the user schema
-        // Encrypt the password
         const body = sanitize(req.body);
         const userObj = MongoDB.client.documentToSchema("users", body);
         try {
