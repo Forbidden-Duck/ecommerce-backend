@@ -40,7 +40,7 @@ module.exports = (app, MongoDB) => {
         }
     });
 
-    router.post("/", cartValidate, async (req, res, next) => {
+    router.post("/", async (req, res, next) => {
         try {
             const cart = await MongoDB.services.cart.create(req.tokenData.userid);
             res.status(201).send(cart);
