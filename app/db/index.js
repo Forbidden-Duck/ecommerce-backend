@@ -75,14 +75,17 @@ module.exports = class MongoDB {
     }
 
     documentToSchema(schemaName, data, noUndefined) {
+        return this.documentToObject(this.getSchema(schemaName), data, noUndefined);
+    }
+
+    documentToObject(obj, data, noUndefined) {
         // Mutate data
         // Prevents unintentionally overriding the current data
         data = Object.assign({}, data);
-        const schema = this.getSchema(schemaName);
-        const schemaKeys = Object.keys(schema);
+        const objKeys = Object.keys(obj);
 
         for (const key of Object.keys(data)) {
-            if (!schemaKeys.includes(key)) {
+            if (!objKeys.includes(key)) {
                 delete data[key];
             }
         }
@@ -90,7 +93,7 @@ module.exports = class MongoDB {
         if (noUndefined) {
             return data;
         }
-        return Object.assign(schema, data);
+        return Object.assign(obj, data);
     }
 
     /** 
