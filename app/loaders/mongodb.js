@@ -12,16 +12,17 @@ module.exports = async () => {
      * @type {Mongo}
      */
     const MongoDB = await (new Mongo(DB))();
-    const user = new UserService(MongoDB); // Auth service requires this
+    const user = new UserService(MongoDB); // Auth & Cart service requires this
+    const product = new ProductService(MongoDB) // Cart service requires this
     const order = new OrderService(MongoDB) // Cart service requires this
     return {
         client: MongoDB,
         services: {
             auth: new AuthService(MongoDB, user),
             user: user,
-            product: new ProductService(MongoDB),
+            product: product,
             order: order,
-            cart: new CartService(MongoDB, order)
+            cart: new CartService(MongoDB, order, user, product)
         }
     }
 };

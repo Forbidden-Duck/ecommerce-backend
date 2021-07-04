@@ -1,12 +1,15 @@
 const CartSchema = require("../db/schemas/carts");
 const { CartItem } = require("../db/schemas/carts"); // Fixes typings breaking
-const OrderService = require("./OrderService");
 const OrderSchema = require("../db/schemas/orders");
 const { OrderItem } = require("../db/schemas/orders"); // Fixes typings breaking
 const createError = require("http-errors");
 const Mongo = require("../db");
 const { createID } = require("../db"); // Fixes typings breaking
 const date = require("../db/date");
+
+const OrderService = require("./OrderService");
+const UserService = require("./UserService");
+const ProductService = require("./ProductService");
 
 /**
  * @typedef {object} checkout
@@ -19,10 +22,14 @@ module.exports = class CartService {
      * 
      * @param {Mongo} MongoDB 
      * @param {OrderService} OrderSVC
+     * @param {UserService} UserSVC
+     * @param {ProductService} ProductSVC
      */
-    constructor(MongoDB, OrderSVC) {
+    constructor(MongoDB, OrderSVC, UserSVC, ProductSVC) {
         this.MongoDB = MongoDB
         this.OrderService = OrderSVC;
+        this.UserService = UserSVC;
+        this.ProductService = ProductSVC;
     }
 
     /**
@@ -63,17 +70,25 @@ module.exports = class CartService {
 
     /**
      * Create a new cart
-     * @param {CartSchema} cartObj 
+     * @param {string} userid
      * @returns {CartSchema}
      */
-    async create(cartObj) {
-        // Create ID without overriding existing one
-        if (cartObj._id === undefined) {
-            cartObj._id = createID();
+    async create(userid) {
+        // Check if user exists
+        const user = await this.UserService.find({ _id: userid });
+        if (!user || user._id === undefined) {
+            throw createError(404, "User not found");
         }
-        // Set createdAt & modifiedAt
-        cartObj.createdAt = date();
-        cartObj.modifiedAt = 0;
+
+        /**
+         * @type {CartSchema}
+         */
+        const cartObj = {
+            _id: createID(),
+            userid: user._id,
+            createdAt: date(),
+            modifiedAt: 0
+        };
 
         // Create the cart
         try {
@@ -131,6 +146,17 @@ module.exports = class CartService {
         const cart = await this.find({ _id: cartID });
         if (!cart || cart._id === undefined) {
             throw createError(404, "Cart not found");
+        }
+
+        // Check if product items exist
+        if (!cart.items || cart.items.length <= 0) {
+            throw createError(400, "No items in the cart");
+        }
+        for (const item of cart.items) {
+            const product = await this.ProductService.find({ _id: item.productid });
+            if (!product || product._id === undefined) {
+                throw createError(404, "Product item not found");
+            }
         }
 
         // Get total price of all items
