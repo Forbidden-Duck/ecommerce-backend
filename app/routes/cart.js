@@ -1,5 +1,6 @@
 const express = require("express");
 const { createID } = require("../db");
+const date = require("../db/date");
 const router = express.Router();
 const sanitize = require("mongo-sanitize");
 
@@ -74,7 +75,16 @@ module.exports = (app, MongoDB) => {
 
         // Convert body to cart item schema
         const body = sanitize(req.body);
-        const cartItemObj = MongoDB.client.documentToObject(CartItemSchema, body);
+        let cartItemObj = MongoDB.client.documentToObject(CartItemSchema, body);
+
+        // Add cart item information
+        cartItemObj = {
+            ...cartItemObj,
+            _id: createID(),
+            createdAt: date(),
+            modifiedAt: 0
+        };
+
         try {
             req.cart.items.push(cartItemObj);
             const cart = await MongoDB.services.cart.update({ items: req.cart.items });
