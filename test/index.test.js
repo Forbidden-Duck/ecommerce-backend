@@ -51,6 +51,10 @@ let request; // Persist cookies
  * @type {import("../app/db/schemas/products")[]}
  */
 let products = []; // Used for cart and orders
+/**
+ * @type {import("../app/db/schemas/orders")}
+ */
+let order; // Order when the cart is checked out
 
 /**
  * Create a new user
@@ -469,19 +473,6 @@ describe("Cart routes", () => {
         it("should update the database with new cart item", async () => {
             expect(await testApp.service.services.cart.find({ _id: cart._id })).toMatchObject(cart);
         });
-
-        afterAll(async () => {
-            const fakeItem = {
-                productid: "1", // For testing checkout
-                quantity: 1,
-                price: 1
-            };
-            const res = await supertest(testApp.app)
-                .post(`/api/cart/${cart._id}/items`)
-                .set("authorization", `Bearer ${logins[0].token}`)
-                .send(fakeItem);
-            cart = res.body.cart; // Update cart with new data
-        });
     });
 
     describe("PUT /:cardid/items/:carditemid", () => {
@@ -492,7 +483,7 @@ describe("Cart routes", () => {
 
         it("should respond 404 if an invalid cart is provided", async () => {
             const res = await supertest(testApp.app)
-                .put("/api/cart/notanid/items/notanid")
+                .put(`/api/cart/${cart._id}/items/notanid`)
                 .set("authorization", `Bearer ${logins[0].token}`)
                 .send();
             expect(res.statusCode).toBe(404);
@@ -516,6 +507,99 @@ describe("Cart routes", () => {
         });
         it("should update the database with updated cart item", async () => {
             expect(await testApp.service.services.cart.find({ _id: cart._id })).toMatchObject(cart);
+        });
+    });
+
+    describe("DELETE /:cardid/items/:cartitemid", () => {
+        it("should respond with 404 if an invalid cart item was provided", async () => {
+            const res = await supertest(testApp.app)
+                .delete(`/api/cart/${cart._id}/items/notanid`)
+                .set("authorization", `Bearer ${logins[0].token}`)
+                .send();
+            expect(res.statusCode).toBe(404);
+        });
+        it("should respond with 403 if a user trys to edit another user's cart", async () => {
+            const res = await supertest(testApp.app)
+                .delete(`/api/cart/${cart._id}/items/${cartitem._id}`)
+                .set("authorization", `Bearer ${logins[1].token}`)
+                .send();
+            expect(res.statusCode).toBe(403);
+        });
+        it("should delete the cart item from the database", async () => {
+            const res = await supertest(testApp.app)
+                .delete(`/api/cart/${cart._id}/items/${cartitem._id}`)
+                .set("authorization", `Bearer ${logins[0].token}`)
+                .send();
+            expect(res.statusCode).toBe(200);
+            expect(await testApp.service.services.cart.findItem(cart._id, { _id: cartitem._id })).toBe(undefined);
+        });
+    });
+
+    describe("POST /:cartid/checkout", () => {
+        let fakeItem;
+
+        beforeAll(async () => {
+            const fakeItemData = {
+                _id: "1",
+                productid: "1",
+                quantity: 1,
+                price: 1
+            };
+            const res = await supertest(testApp.app)
+                .post(`/api/cart/${cart._id}/items`)
+                .set("authorization", `Bearer ${logins[0].token}`)
+                .send(fakeItemData);
+            cart = res.body.cart; // Update cart with new data
+            fakeItem = res.body.cartItem; // Update fake item
+        });
+
+        it("should respond with 404 if an invalid cart is provided", async () => {
+            const res = await supertest(testApp.app)
+                .post("/api/cart/notanid/checkout")
+                .set("authorization", `Bearer ${logins[0].token}`)
+                .send();
+            expect(res.statusCode).toBe(404);
+        });
+        it("should respond with 404 if an invalid product is in the cart", async () => {
+            const res = await supertest(testApp.app)
+                .post(`/api/cart/${cart._id}/checkout`)
+                .set("authorization", `Bearer ${logins[0].token}`)
+                .send();
+            expect(res.statusCode).toBe(404);
+
+            // Delete invalid product for next test
+            await supertest(testApp.app)
+                .delete(`/api/cart/${cart._id}/items/${fakeItem._id}`)
+                .set("authorization", `Bearer ${logins[0].token}`)
+                .send();
+        });
+        it("should respond with 400 if no products are in the cart", async () => {
+            const res = await supertest(testApp.app)
+                .post(`/api/cart/${cart._id}/checkout`)
+                .set("authorization", `Bearer ${logins[0].token}`)
+                .send();
+            expect(res.statusCode).toBe(400);
+
+            // Add another cart item
+            const res2 = await supertest(testApp.app)
+                .post(`/api/cart/${cart._id}/items`)
+                .set("authorization", `Bearer ${logins[0].token}`)
+                .send({ productid: "100", quantity: 2, price: 15 * 2 });
+            cart = res2.body.cart; // Update cart with new data
+            cartitem = res2.body.cartItem // Update cart item with new data
+        });
+        it("should respond with the new order and charge", async () => {
+            const res = await supertest(testApp.app)
+                .post(`/api/cart/${cart._id}/checkout`)
+                .set("authorization", `Bearer ${logins[0].token}`)
+                .send();
+            expect(res.statusCode).toBe(201);
+            expect(res.body).toMatchObject({ order: {}, charge: "Not available" }); // TODO add new charge when stripe is implemented
+            order = res.body.order;
+        });
+        it("should add the order to the database", async () => {
+            expect(await testApp.service.services.order.find({ _id: order._id }))
+                .toMatchObject(order);
         });
     });
 });

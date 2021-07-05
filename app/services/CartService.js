@@ -171,13 +171,13 @@ module.exports = class CartService {
         const orderObj = {
             userid: cart.userid,
             total: total,
-            items: cart.items
+            items: cart.items,
+            status: "COMPLETED"
         };
         const order = this.OrderService.create(orderObj);
 
         // Make the charge to the user
         const charge = "Not available"; // Stripe not connected yet
-        order.status = "COMPLETED";
         return {
             order: order,
             charge: charge
