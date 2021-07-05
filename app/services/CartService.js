@@ -112,7 +112,7 @@ module.exports = class CartService {
      */
     async update(cartObj) {
         // Check if the cart exists
-        const cart = await this.find({ _id: cartID });
+        const cart = await this.find({ _id: cartObj._id });
         if (!cart || cart._id === undefined) {
             throw createError(404, "Cart not found");
         }

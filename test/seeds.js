@@ -28,14 +28,17 @@ module.exports.clearDB = async (MongoDB) => {
  */
 module.exports.products = () => {
     return ([{
+        _id: "100",
         name: "Hat",
         description: "Some really cool hat you could be wearing",
         price: 15
     }, {
+        _id: "200",
         name: "Shirt",
         description: "A cool looking shirt I'm wearing tonight",
         price: 15
     }, {
+        _id: "300",
         name: "Pants",
         description: "Pants you wish you could afford",
         price: 999
@@ -43,5 +46,3 @@ module.exports.products = () => {
 }
 
 // TODO Order seeds
-
-// TODO Cart seeds

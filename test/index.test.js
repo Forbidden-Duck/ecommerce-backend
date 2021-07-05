@@ -47,6 +47,10 @@ let testApp; // So we can close the connection
  * @type {import("supertest").SuperAgentTest}
  */
 let request; // Persist cookies
+/**
+ * @type {import("../app/db/schemas/products")[]}
+ */
+let products = []; // Used for cart and orders
 
 /**
  * Create a new user
@@ -240,7 +244,7 @@ describe("User routes", () => {
                 .send();
             expect(res.statusCode).toBe(404);
         });
-        it("should send back the user", async () => {
+        it("should respond with the correct user", async () => {
             const res = await supertest(testApp.app)
                 .get(`/api/user/${registers[0]._id}`)
                 .set("authorization", `Bearer ${logins[0].token}`)
@@ -320,8 +324,6 @@ describe("Product routes", () => {
     let register;
     let login; // New user for testing products
 
-
-    let products = []; // Function to populate products
     beforeAll(async () => {
         register = (await createUser({ ...userData, password: "mypassword" })).body;
         login = (await loginUser(supertest(testApp.app), { ...userData, password: "mypassword" })).body;
@@ -331,6 +333,15 @@ describe("Product routes", () => {
             products.push(await testApp.service.services.product.create(product));
         }
     });
+
+    it("should respond with 401 when an unauthorized user makes a request", async () => {
+        const res = await supertest(testApp.app)
+            .get("/api/product")
+            .set("authorization", "Bearer notatoken")
+            .send();
+        expect(res.statusCode).toBe(401);
+    });
+
 
     describe("GET /", () => {
         it("should return all products if no query is provided", async () => {
@@ -354,10 +365,161 @@ describe("Product routes", () => {
     });
 });
 
-describe("Order routes", () => {
-    // TODO Order Routes
+describe("Cart routes", () => {
+    const usersData = [{
+        email: "andy@carttester.com",
+        firstname: "Just",
+        lastname: "Andy"
+    }, {
+        email: "bob@carttester.com",
+        firstname: "Andy",
+        lastname: "Sucks"
+    }];
+    let registers = [];
+    let logins = [];
+    let cart;
+    let cartitem;
+
+    beforeAll(async () => { // Create new users for testing
+        registers[0] = (await createUser({ ...usersData[0], password: "iamjustandy" })).body;
+        registers[1] = (await createUser({ ...usersData[1], password: "iwishicouldfireandy" })).body;
+        logins[0] = (await loginUser(supertest(testApp.app), { ...usersData[0], password: "iamjustandy" })).body;
+        logins[1] = (await loginUser(supertest(testApp.app), { ...usersData[1], password: "iwishicouldfireandy" })).body;
+    });
+
+    it("should respond with 401 when an unauthorized user makes a request", async () => {
+        const res = await supertest(testApp.app)
+            .get("/api/product")
+            .set("authorization", "Bearer notatoken")
+            .send();
+        expect(res.statusCode).toBe(401);
+    });
+
+    describe("POST /", () => {
+        it("should respond with the cart", async () => {
+            const res = await supertest(testApp.app)
+                .post("/api/cart")
+                .set("authorization", `Bearer ${logins[0].token}`)
+                .send();
+            expect(res.statusCode).toBe(201);
+            expect(res.body).toMatchObject({ userid: registers[0]._id, items: [] });
+            cart = res.body;
+        });
+        it("should add the cart to the database", async () => {
+            expect(await testApp.service.services.cart.find({ _id: cart._id })).toMatchObject(cart);
+        });
+    });
+
+    describe("GET /:cartid", () => {
+        it("should respond with 404 if an invalid cart is provided", async () => {
+            const res = await supertest(testApp.app)
+                .get("/api/cart/notanid")
+                .set("authorization", `Bearer ${logins[0].token}`)
+                .send();
+            expect(res.statusCode).toBe(404);
+        });
+        it("should respond with 403 if a user trys to access another user's cart", async () => {
+            const res = await supertest(testApp.app)
+                .get(`/api/cart/${cart._id}`)
+                .set("authorization", `Bearer ${logins[1].token}`)
+                .send();
+            expect(res.statusCode).toBe(403);
+        });
+        it("should respond with the correct cart", async () => {
+            const res = await supertest(testApp.app)
+                .get(`/api/cart/${cart._id}`)
+                .set("authorization", `Bearer ${logins[0].token}`)
+                .send();
+            expect(res.statusCode).toBe(200);
+            expect(res.body).toMatchObject(cart);
+        });
+    });
+
+    describe("POST /:cartid/items", () => {
+        const cartItemData = {
+            productid: "100",
+            quantity: 2,
+            price: 15 * 2
+        };
+
+        it("should respond with 404 if an invalid cart is provided", async () => {
+            const res = await supertest(testApp.app)
+                .post("/api/cart/notanid/items")
+                .set("authorization", `Bearer ${logins[0].token}`)
+                .send();
+            expect(res.statusCode).toBe(404);
+        });
+        it("should respond with 403 if a user trys to edit another user's cart", async () => {
+            const res = await supertest(testApp.app)
+                .post(`/api/cart/${cart._id}/items`)
+                .set("authorization", `Bearer ${logins[1].token}`)
+                .send(cartItemData);
+            expect(res.statusCode).toBe(403);
+        });
+        it("should respond with the cart item added to the cart", async () => {
+            const res = await supertest(testApp.app)
+                .post(`/api/cart/${cart._id}/items`)
+                .set("authorization", `Bearer ${logins[0].token}`)
+                .send(cartItemData);
+            expect(res.statusCode).toBe(201);
+            expect(res.body).toMatchObject({ cart: {}, cartItem: cartItemData });
+            cart = res.body.cart; // Update cart with new data
+            cartitem = res.body.cartItem // Update cart item with new data
+        });
+        it("should update the database with new cart item", async () => {
+            expect(await testApp.service.services.cart.find({ _id: cart._id })).toMatchObject(cart);
+        });
+
+        afterAll(async () => {
+            const fakeItem = {
+                productid: "1", // For testing checkout
+                quantity: 1,
+                price: 1
+            };
+            const res = await supertest(testApp.app)
+                .post(`/api/cart/${cart._id}/items`)
+                .set("authorization", `Bearer ${logins[0].token}`)
+                .send(fakeItem);
+            cart = res.body.cart; // Update cart with new data
+        });
+    });
+
+    describe("PUT /:cardid/items/:carditemid", () => {
+        const cartItemData = {
+            quantity: 3,
+            price: 15 * 2
+        };
+
+        it("should respond 404 if an invalid cart is provided", async () => {
+            const res = await supertest(testApp.app)
+                .put("/api/cart/notanid/items/notanid")
+                .set("authorization", `Bearer ${logins[0].token}`)
+                .send();
+            expect(res.statusCode).toBe(404);
+        });
+        it("should respond with 403 if a user trys to edit another user's cart", async () => {
+            const res = await supertest(testApp.app)
+                .put(`/api/cart/${cart._id}/items/${cartitem._id}`)
+                .set("authorization", `Bearer ${logins[1].token}`)
+                .send();
+            expect(res.statusCode).toBe(403);
+        });
+        it("should respond with the cart item updated", async () => {
+            const res = await supertest(testApp.app)
+                .put(`/api/cart/${cart._id}/items/${cartitem._id}`)
+                .set("authorization", `Bearer ${logins[0].token}`)
+                .send(cartItemData);
+            expect(res.statusCode).toBe(200);
+            expect(res.body).toMatchObject({ cart: {}, cartItem: cartItemData });
+            cart = res.body.cart;
+            cartitem = res.body.cartItem;
+        });
+        it("should update the database with updated cart item", async () => {
+            expect(await testApp.service.services.cart.find({ _id: cart._id })).toMatchObject(cart);
+        });
+    });
 });
 
-describe("Cart routes", () => {
-    // TODO Cart Routes
+describe("Order routes", () => {
+    // TODO Order Routes
 });

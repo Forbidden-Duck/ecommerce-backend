@@ -31,15 +31,3 @@ module.exports = {
     createdAt: undefined,
     modifiedAt: undefined
 };
-
-/**
- * @type {OrderItem}
- */
-module.exports.OrderItemSchema = {
-    _id: undefined,
-    productid: undefined,
-    quantity: undefined,
-    price: undefined,
-    createdAt: undefined,
-    modifiedAt: undefined
-};

@@ -5,7 +5,7 @@ const router = express.Router();
 const sanitize = require("mongo-sanitize");
 
 const CartSchema = require("../db/schemas/carts");
-const { CartItemSchema } = require("../db/schemas/carts");
+const CartItemSchema = require("../db/hidden-schemas/cartitems");
 
 /**
  * User Router
@@ -87,12 +87,13 @@ module.exports = (app, MongoDB) => {
 
         try {
             req.cart.items.push(cartItemObj);
-            const cart = await MongoDB.services.cart.update({ items: req.cart.items });
+            const cart = await MongoDB.services.cart.update({ _id: req.cart._id, items: req.cart.items });
             res.status(201).send({
                 cart,
                 cartItem: cartItemObj
             });
-        } catch (error) {
+        } catch (err) {
+            console.log(err.stack)
             res.status(err.status || 500).send(err.message);
         }
     });
@@ -115,7 +116,7 @@ module.exports = (app, MongoDB) => {
                 cartItem[key] = value;
             }
 
-            const cart = await MongoDB.services.cart.update({ items: req.cart.items });
+            const cart = await MongoDB.services.cart.update({ _id: req.cart._id, items: req.cart.items });
             res.status(200).send({
                 cart,
                 cartItem
@@ -137,7 +138,7 @@ module.exports = (app, MongoDB) => {
             }
             req.cart.items = req.cart.items.filter(item => item._id !== req.cartitem._id);
 
-            await MongoDB.services.cart.update({ items: req.cart.items });
+            await MongoDB.services.cart.update({ _id: req.cart._id, items: req.cart.items });
             res.sendStatus(200);
         } catch (err) {
             res.status(err.status || 500).send(err.message);

@@ -31,6 +31,6 @@ module.exports = (app, MongoDB) => {
     });
     require("../routes/user")(app, MongoDB);
     require("../routes/product")(app, MongoDB);
+    require("../routes/cart")(app, MongoDB);
     // TODO Order route require("../routes/order")(app, MongoDB);
-    // TODO Cart route require("../routes/cart")(app, MongoDB);
 };

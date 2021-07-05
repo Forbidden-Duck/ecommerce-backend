@@ -1,13 +1,4 @@
 /**
- * @typedef {object} Cart
- * @property {string} [_id]
- * @property {string} [userid]
- * @property {CartItem[]} [items]
- * @property {string} [createdAt]
- * @property {string} [modifiedAt]
- */
-
-/**
  * @typedef {object} CartItem
  * @property {string} [_id]
  * @property {string} [productid]
@@ -18,12 +9,13 @@
  */
 
 /**
- * @type {Cart}
+ * @type {CartItem}
  */
 module.exports = {
     _id: undefined,
-    userid: undefined,
-    items: [],
+    productid: undefined,
+    quantity: undefined,
+    price: undefined,
     createdAt: undefined,
     modifiedAt: undefined
 };
