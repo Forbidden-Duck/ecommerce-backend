@@ -87,8 +87,8 @@ module.exports = (app, MongoDB) => {
 
         try {
             req.cart.items.push(cartItemObj);
-            const cart = await MongoDB.services.cart.update({ items: req.cart.items });
-            res.status(201).send(cart);
+            await MongoDB.services.cart.update({ items: req.cart.items });
+            res.status(201).send(cartItemObj);
         } catch (error) {
             res.status(err.status || 500).send(err.message);
         }
@@ -112,8 +112,8 @@ module.exports = (app, MongoDB) => {
                 cartItem[key] = value;
             }
 
-            const cart = await MongoDB.services.cart.update({ items: req.cart.items });
-            res.status(200).send(cart);
+            await MongoDB.services.cart.update({ items: req.cart.items });
+            res.status(200).send(cartItem);
         } catch (err) {
             res.status(err.status || 500).send(err.message);
         }
@@ -131,8 +131,8 @@ module.exports = (app, MongoDB) => {
             }
             req.cart.items = req.cart.items.filter(item => item._id !== req.cartitem._id);
 
-            const cart = await MongoDB.services.cart.update({ items: req.cart.items });
-            res.status(200).send(cart);
+            await MongoDB.services.cart.update({ items: req.cart.items });
+            res.sendStatus(200);
         } catch (err) {
             res.status(err.status || 500).send(err.message);
         }
