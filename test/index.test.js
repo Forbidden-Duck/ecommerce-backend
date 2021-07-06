@@ -55,6 +55,7 @@ let products = []; // Used for cart and orders
  * @type {import("../app/db/schemas/orders")}
  */
 let order; // Order when the cart is checked out
+let orderLogin; // Login used to create the order
 
 /**
  * Create a new user
@@ -389,6 +390,7 @@ describe("Cart routes", () => {
         registers[1] = (await createUser({ ...usersData[1], password: "iwishicouldfireandy" })).body;
         logins[0] = (await loginUser(supertest(testApp.app), { ...usersData[0], password: "iamjustandy" })).body;
         logins[1] = (await loginUser(supertest(testApp.app), { ...usersData[1], password: "iwishicouldfireandy" })).body;
+        orderLogin = logins[0]; // Save order login
     });
 
     it("should respond with 401 when an unauthorized user makes a request", async () => {
@@ -605,5 +607,60 @@ describe("Cart routes", () => {
 });
 
 describe("Order routes", () => {
-    // TODO Order Routes
+    const userData = {
+        email: "Ordertester@company.com",
+        firstname: "Not a",
+        lastname: "Tester"
+    };
+    let register;
+    let login; // New user for testing orders
+
+    beforeAll(async () => {
+        register = (await createUser({ ...userData, password: "mypassword" })).body;
+        login = (await loginUser(supertest(testApp.app), { ...userData, password: "mypassword" })).body;
+    });
+
+    it("should respond with 401 when an unauthorized user makes a request", async () => {
+        const res = await supertest(testApp.app)
+            .get("/api/product")
+            .set("authorization", "Bearer notatoken")
+            .send();
+        expect(res.statusCode).toBe(401);
+    });
+
+    describe("GET /", () => {
+        it("should respond 404 if the user has no orders", async () => {
+            const res = await supertest(testApp.app)
+                .get("/api/order")
+                .set("authorization", `Bearer ${login.token}`)
+                .send();
+            expect(res.statusCode).toBe(404);
+        });
+        it("should respond with all user orders", async () => {
+            const res = await supertest(testApp.app)
+                .get("/api/order")
+                .set("authorization", `Bearer ${orderLogin.token}`)
+                .send();
+            expect(res.statusCode).toBe(200);
+            expect(res.body).toMatchObject([order]);
+        });
+    });
+
+    describe("GET /:orderid", () => {
+        it("should respond 404 if an invalid order was provided", async () => {
+            const res = await supertest(testApp.app)
+                .get("/api/order/notanid")
+                .set("authorization", `Bearer ${orderLogin.token}`)
+                .send();
+            expect(res.statusCode).toBe(404);
+        });
+        it("should respond with the correct order", async () => {
+            const res = await supertest(testApp.app)
+                .get(`/api/order/${order._id}`)
+                .set("authorization", `Bearer ${orderLogin.token}`)
+                .send();
+            expect(res.statusCode).toBe(200);
+            expect(res.body).toMatchObject(order);
+        });
+    });
 });

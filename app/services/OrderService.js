@@ -57,7 +57,7 @@ module.exports = class OrderService {
      */
     async findOrdersByUser(userID) {
         try {
-            return await this.MongoDB.find("orders", { userid: userID }, {}, true);
+            return await this.MongoDB.find("orders", { userid: userID }, {});
         } catch (err) {
             throw createError(404, "Orders not found");
         }

@@ -174,12 +174,12 @@ module.exports = class CartService {
             items: cart.items,
             status: "COMPLETED"
         };
-        const order = this.OrderService.create(orderObj);
+        const order = await this.OrderService.create(orderObj);
 
         // Make the charge to the user
         const charge = "Not available"; // Stripe not connected yet
         return {
-            order: order,
+            order,
             charge: charge
         };
     }
