@@ -42,7 +42,9 @@ module.exports = (app, MongoDB) => {
     });
 
     router.get("/:userid", (req, res, next) => {
-        res.status(200).send(req.user);
+        const user = Object.assign({}, req.user);
+        delete user.password; // Don't send that...........
+        res.status(200).send(user);
     });
 
     router.put("/:userid", async (req, res, next) => {
