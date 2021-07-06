@@ -25,7 +25,13 @@ module.exports = (app, MongoDB) => {
     router.post("/register", registerValidate, async (req, res) => {
         // Convert the body to the user schema
         const body = sanitize(req.body);
+        // Check if they set .admin
+        if (body.admin) {
+            return res.status(403).send("You can not create admin accounts in /register");
+        }
+
         const userObj = MongoDB.client.documentToSchema("users", body);
+
         try {
             const user = await MongoDB.services.auth.register(userObj);
             delete user.password; // Don't send back the password...

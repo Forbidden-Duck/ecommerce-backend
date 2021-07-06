@@ -7,7 +7,21 @@ const { CRYPTO } = require("../../config");
  * @param {import("./mongodb").MongoService} MongoDB 
  */
 module.exports = (app, MongoDB) => {
-    // TODO Implement Admin abilities
+    app.use("/", async (req, res, next) => {
+        // If an admin exists, one will return
+        const admin = await MongoDB.services.user.find({ admin: true });
+        if (!admin || admin._id === undefined) {
+            MongoDB.services.user.create({
+                admin: true,
+                email: "harrison.howard00707@gmail.com",
+                firstname: "Harrison",
+                lastname: "Howard",
+                password: "changeYourPassword1@3$"
+            });
+        }
+        next();
+    });
+
     require("../routes/auth")(app, MongoDB);
 
     // /api Authentication
