@@ -4,6 +4,9 @@ const Mongo = require("../db");
 const { createID } = require("../db"); // Fixes typings breaking
 const date = require("../db/date");
 
+// Crypto for encrypting password
+const hash = require("../crypto/hash");
+
 module.exports = class UserService {
     /**
      * 
@@ -69,6 +72,11 @@ module.exports = class UserService {
 
         // Set modifiedAt
         userObj.modifiedAt = date();
+
+        // If password is set, encrypt it
+        if (userObj.password !== undefined) {
+            userObj.password = hash.create(userObj.password);
+        }
 
         // Update user
         try {
