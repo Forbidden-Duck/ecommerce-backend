@@ -74,7 +74,7 @@ module.exports = class AuthService {
         if (hash.compare(password, user.password)) {
             // Create token, refresh token and expiry
             const token = jwt.sign(
-                { userid: user._id, email: user.email },
+                { userid: user._id, email: user.email, admin: user.admin },
                 CRYPTO.jwtkey,
                 { algorithm: "HS256", expiresIn: "15m" }
             );
