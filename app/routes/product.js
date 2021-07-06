@@ -45,5 +45,52 @@ module.exports = (app, MongoDB) => {
         res.status(200).send(req.product);
     });
 
-    // TODO Product POST PUT DELETE (Admin ability)
+    router.post("/", async (req, res, next) => {
+        if (!req.tokenData.admin) {
+            return res.status(403).send("You are not an admin");
+        }
+
+        const body = sanitize(req.body);
+        const productObj = MongoDB.client.documentToSchema("products", body);
+        try {
+            const product = await MongoDB.services.product.create(productObj);
+            res.status(201).send(product);
+        } catch (err) {
+            res.status(err.status || 500).send(err.message);
+        }
+    });
+
+    router.put("/:productid", async (req, res, next) => {
+        if (!req.tokenData.admin) {
+            return res.status(403).send("You are not an admin");
+        }
+
+        const body = sanitize(req.body);
+        delete body.createdAt;
+        delete body.modifiedAt; // Do not allow overriding these
+        const productObj = MongoDB.client.documentToSchema("products", body, true);
+        productObj._id = req.product._id; // Ensure the _id exists
+        try {
+            const product = await MongoDB.services.product.update(productObj);
+            res.status(200).send(product);
+        } catch (err) {
+            res.status(err.status || 500).send(err.message);
+        }
+    });
+
+    router.delete("/:productid", async (req, res, next) => {
+        if (!req.tokenData.admin) {
+            return res.status(403).send("You are not an admin");
+        }
+
+        try {
+            const hasDelete = await MongoDB.services.product.delete(req.product._id);
+            if (!hasDelete) {
+                return res.status(500).send("Failed to delete product");
+            }
+            res.sendStatus(204);
+        } catch (err) {
+            res.status(err.status || 500).send(err.message);
+        }
+    });
 }

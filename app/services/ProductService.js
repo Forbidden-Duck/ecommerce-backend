@@ -81,7 +81,7 @@ module.exports = class ProductService {
         }
 
         // Set modifiedAt
-        product.modifiedAt = date();
+        productObj.modifiedAt = date();
 
         // Update product
         try {
