@@ -8,7 +8,6 @@ const { CRYPTO } = require("../../config");
  */
 module.exports = (app, MongoDB) => {
     // TODO Implement Admin abilities
-    // TODO Implement IP blocking
     require("../routes/auth")(app, MongoDB);
 
     // /api Authentication
