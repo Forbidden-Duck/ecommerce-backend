@@ -92,7 +92,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-    //await seeds.clearDB(testApp.service.client); // Clear database after
+    await seeds.clearDB(testApp.service.client); // Clear database after
     testApp.server.close();
     testApp.service.client.client.close();
 });
