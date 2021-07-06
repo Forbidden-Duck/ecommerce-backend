@@ -41,6 +41,8 @@ module.exports = (app, MongoDB) => {
         }
     });
 
+    // TODO admins need to be able to create, edit and delete other user carts
+    // Use req.body?
     router.post("/", async (req, res, next) => {
         try {
             const cart = await MongoDB.services.cart.create(req.tokenData.userid);
