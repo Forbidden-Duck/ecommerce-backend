@@ -46,13 +46,20 @@ module.exports = (app, MongoDB) => {
     });
 
     router.put("/:userid", async (req, res, next) => {
-        if (req.tokenData.userid !== req.user._id) {
+        if (req.tokenData.userid !== req.user._id
+            && !req.tokenData.admin) {
             return res.status(403).send("Can't edit other users");
         }
 
         const body = sanitize(req.body);
         delete body.createdAt;
         delete body.modifiedAt; // Do not allow overriding of these
+
+        if (body.admin && !req.tokenData.admin) {
+            return res.status(403).send("You can not make your account an admin");
+        } else if (!body.admin && req.tokenData.admin) {
+            return res.status(403).send("You can not add admin=false to the body");
+        }
 
         const userObj = MongoDB.client.documentToSchema("users", body, true); // Remove bad fields
         userObj._id = req.user._id; // Ensure the _id exists
@@ -66,9 +73,16 @@ module.exports = (app, MongoDB) => {
     });
 
     router.delete("/:userid", async (req, res, next) => {
-        if (req.tokenData.userid !== req.user._id) {
+        if (req.tokenData.userid !== req.user._id
+            && !req.tokenData.admin) {
             return res.status(403).send("Can't delete other users");
         }
+        // Admins can't delete their own or other admin accounts
+        const user = await MongoDB.services.user.find({ _id: req.user._id });
+        if (user && user.admin) {
+            return res.status(403).send("Can't delete your or other admin accounts");
+        }
+
         try {
             const hasDelete = await MongoDB.services.user.delete(req.user._id);
             if (!hasDelete) {
