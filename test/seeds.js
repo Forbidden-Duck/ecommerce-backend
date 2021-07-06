@@ -44,5 +44,3 @@ module.exports.products = () => {
         price: 999
     }]);
 }
-
-// TODO Order seeds
