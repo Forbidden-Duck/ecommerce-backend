@@ -29,7 +29,6 @@ module.exports = (app, MongoDB) => {
         if (body.admin) {
             return res.status(403).send("You can not create admin accounts in /register");
         }
-
         const userObj = MongoDB.client.documentToSchema("users", body);
 
         try {

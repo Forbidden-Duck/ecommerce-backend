@@ -46,8 +46,8 @@ module.exports = class AuthService {
      */
     async register(userObj) {
         // Check if user already exists
-        const user = this.UserService.find({ email: userObj.email });
-        if (user._id !== undefined) {
+        const user = await this.UserService.find({ email: userObj.email });
+        if (!user || user._id !== undefined) {
             throw createError(409, "Email already registered");
         }
 

@@ -26,6 +26,21 @@ module.exports = (app, MongoDB) => {
         }
     });
 
+    router.post("/", async (req, res, next) => {
+        if (!req.tokenData.admin) {
+            return res.status(403).send("You are not an admin");
+        }
+        const body = sanitize(req.body);
+        const userObj = MongoDB.client.documentToSchema("users", body);
+        try {
+            const user = await MongoDB.services.auth.register(userObj);
+            delete user.password; // Don't send back the password...
+            res.status(201).json(user);
+        } catch (err) {
+            res.status(err.status || 500).send(err.message);
+        }
+    });
+
     router.get("/:userid", (req, res, next) => {
         res.status(200).send(req.user);
     });
