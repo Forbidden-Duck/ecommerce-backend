@@ -30,6 +30,19 @@ module.exports = class UserService {
     }
 
     /**
+     * Find an array of users
+     * @param {UserSchema} data
+     * @returns {UserSchema[]} 
+     */
+    async findMany(data) {
+        try {
+            return await this.MongoDB.find("users", data, {}, true);
+        } catch (err) {
+            throw createError(404, "Users not found");
+        }
+    }
+
+    /**
      * Create a new user
      * @param {UserSchema} userObj
      * @returns {UserSchema}

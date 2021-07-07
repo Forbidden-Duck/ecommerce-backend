@@ -11,7 +11,7 @@ module.exports = (app, MongoDB) => {
         // If an admin exists, one will return
         const admin = await MongoDB.services.user.find({ admin: true });
         if (!admin || admin._id === undefined) {
-            MongoDB.services.auth.register({
+            MongoDB.services.auth.register({ // Ensure an admin account exists
                 admin: true,
                 email: "harrison.howard00707@gmail.com",
                 firstname: "Harrison",

@@ -41,6 +41,25 @@ module.exports = (app, MongoDB) => {
         }
     });
 
+    router.get("/", async (req, res, next) => {
+        if (!req.tokenData.admin) {
+            return res.status(403).send("You are not an admin");
+        }
+
+        try {
+            const users = await MongoDB.services.user.findMany({});
+            if (!users || users.length <= 0) {
+                return res.status(404).send("Users not found");
+            }
+            for (const user of users) {
+                delete user.password; // Don't send that.....
+            }
+            res.status(200).send(users);
+        } catch (err) {
+            res.status(err.status || 500).send(err.message);
+        }
+    });
+
     router.get("/:userid", (req, res, next) => {
         const user = Object.assign({}, req.user);
         delete user.password; // Don't send that...........
@@ -59,7 +78,7 @@ module.exports = (app, MongoDB) => {
 
         if (body.admin && !req.tokenData.admin) {
             return res.status(403).send("You can not make your account an admin");
-        } else if (!body.admin && req.tokenData.admin) {
+        } else if (body.admin == false && req.tokenData.admin) {
             return res.status(403).send("You can not add admin=false to the body");
         }
 
