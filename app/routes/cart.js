@@ -41,11 +41,21 @@ module.exports = (app, MongoDB) => {
         }
     });
 
-    // TODO admins need to be able to create, edit and delete other user carts
-    // Use req.body?
     router.post("/", async (req, res, next) => {
+        let userid = req.tokenData.userid;
+        // adminBody is used to allow admins to change who's cart is being created
+        // and other useful params in which users can not change
+        if (req.tokenData.admin
+            && req.body.adminBody) {
+            userid = req.body.adminBody.userid || userid;
+        }
+        const cart = await MongoDB.services.cart.find({ userid });
+        if (cart._id !== undefined) {
+            return res.status(409).send("Cart already exists");
+        }
+
         try {
-            const cart = await MongoDB.services.cart.create(req.tokenData.userid);
+            const cart = await MongoDB.services.cart.create(userid);
             res.status(201).send(cart);
         } catch (err) {
             res.status(err.status || 500).send(err.message);
@@ -53,7 +63,8 @@ module.exports = (app, MongoDB) => {
     });
 
     router.get("/:cartid", async (req, res, next) => {
-        if (req.tokenData.userid !== req.cart.userid) {
+        if (req.tokenData.userid !== req.cart.userid
+            && !req.tokenData.admin) {
             return res.status(403).send("Can't get other user's carts");
         }
 
@@ -71,7 +82,8 @@ module.exports = (app, MongoDB) => {
         next();
     };
     router.post("/:cartid/items", cartItemValidate, async (req, res, next) => {
-        if (req.tokenData.userid !== req.cart.userid) {
+        if (req.tokenData.userid !== req.cart.userid
+            && !req.tokenData.admin) {
             return res.status(403).send("Can't edit other user's carts");
         }
 
@@ -101,7 +113,8 @@ module.exports = (app, MongoDB) => {
     });
 
     router.put("/:cartid/items/:cartitemid", async (req, res, next) => {
-        if (req.tokenData.userid !== req.cart.userid) {
+        if (req.tokenData.userid !== req.cart.userid
+            && !req.tokenData.admin) {
             return res.status(403).send("Can't edit other user's carts");
         }
 
@@ -110,7 +123,7 @@ module.exports = (app, MongoDB) => {
         // Limit updatable fields to quantity and price
         const cartItemObj = MongoDB.client.documentToObject({ quantity: 0, price: 0 }, body, true);
         try {
-            const cartItem = await MongoDB.services.cart.findItem(req.cart._id, { _id: req.cartitem._id });
+            const cartItem = req.cart.items.find(item => item._id === req.cartitem._id);
             if (!cartItem || cartItem._id === undefined) {
                 return res.status(404).send("Cart item not found");
             }
@@ -129,7 +142,8 @@ module.exports = (app, MongoDB) => {
     });
 
     router.delete("/:cartid/items/:cartitemid", async (req, res, next) => {
-        if (req.tokenData.userid !== req.cart.userid) {
+        if (req.tokenData.userid !== req.cart.userid
+            && !req.tokenData.admin) {
             return res.status(403).send("Can't edit other user's carts");
         }
 
@@ -148,6 +162,10 @@ module.exports = (app, MongoDB) => {
     });
 
     router.post("/:cartid/checkout", async (req, res, next) => {
+        if (req.tokenData.userid !== req.cart.userid) {
+            return res.status(403).send("Can't checkout other user's carts");
+        }
+
         try {
             const checkout = await MongoDB.services.cart.checkout(req.cart._id);
             res.status(201).send(checkout);
