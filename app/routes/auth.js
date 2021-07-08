@@ -63,6 +63,7 @@ module.exports = (app, MongoDB) => {
             });
             res.status(200).json({
                 userid: loginObj.user._id,
+                admin: loginObj.user.admin, // Helpful for managing front-end reducers
                 token: loginObj.token,
                 expiresIn: loginObj.expiresIn,
                 refreshtoken: loginObj.refreshtoken
@@ -95,6 +96,7 @@ module.exports = (app, MongoDB) => {
             });
             res.status(200).json({
                 userid: refreshObj.user._id,
+                admin: loginObj.user.admin, // Helpful for managing front-end reducers
                 token: refreshObj.token,
                 expiresIn: refreshObj.expiresIn,
                 refreshtoken: refreshObj.refreshtoken
