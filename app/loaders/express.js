@@ -13,7 +13,7 @@ const mongoRateLimitStore = require("rate-limit-mongo");
 const rateLimitExpiry = 15 * 60 * 1000; // 15 minutes
 
 module.exports = (app) => {
-    app.use(cors({ credentials: true }));
+    app.use(cors({ credentials: true, origin: true }));
     app.use(helmet());
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({ extended: true }));
