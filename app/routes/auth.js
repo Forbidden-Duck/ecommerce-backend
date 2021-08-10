@@ -7,17 +7,21 @@ const UserSchema = require("../db/schemas/users");
 
 /**
  * Auth Router
- * @param {router} app 
- * @param {import("../loaders/mongodb").MongoService} MongoDB 
+ * @param {router} app
+ * @param {import("../loaders/mongodb").MongoService} MongoDB
  */
 module.exports = (app, MongoDB) => {
     app.use("/auth", router);
 
     const registerValidate = async (req, res, next) => {
         const body = req.body;
-        if (typeof body !== "object"
-            || (typeof body.email !== "string" || body.email.length < 4 || body.email.length > 32)
-            || typeof body.password !== "string") {
+        if (
+            typeof body !== "object" ||
+            typeof body.email !== "string" ||
+            body.email.length < 4 ||
+            body.email.length > 32 ||
+            typeof body.password !== "string"
+        ) {
             return res.sendStatus(400);
         }
         next();
@@ -27,7 +31,9 @@ module.exports = (app, MongoDB) => {
         const body = sanitize(req.body);
         // Check if they set .admin
         if (body.admin) {
-            return res.status(403).send("You can not create admin accounts in /register");
+            return res
+                .status(403)
+                .send("You can not create admin accounts in /register");
         }
         const userObj = MongoDB.client.documentToSchema("users", body);
 
@@ -42,9 +48,11 @@ module.exports = (app, MongoDB) => {
 
     const loginValidate = (req, res, next) => {
         const body = req.body;
-        if (typeof body !== "object"
-            || typeof body.email !== "string"
-            || typeof body.password !== "string") {
+        if (
+            typeof body !== "object" ||
+            typeof body.email !== "string" ||
+            typeof body.password !== "string"
+        ) {
             return res.sendStatus(400);
         }
         next();
@@ -54,10 +62,13 @@ module.exports = (app, MongoDB) => {
         const body = req.body;
         try {
             // Log the user in
-            const loginObj = await MongoDB.services.auth.login(body.email, body.password);
+            const loginObj = await MongoDB.services.auth.login(
+                body.email,
+                body.password
+            );
 
             res.cookie("refresh_token", loginObj.refreshtoken, {
-                maxAge: 2.592e+9, // 30 days
+                maxAge: 2.592e9, // 30 days
                 httpOnly: true,
                 secure: process.env.NODE_ENV === "production",
             });
@@ -66,7 +77,7 @@ module.exports = (app, MongoDB) => {
                 admin: loginObj.user.admin, // Helpful for managing front-end reducers
                 token: loginObj.token,
                 expiresIn: loginObj.expiresIn,
-                refreshtoken: loginObj.refreshtoken
+                refreshtoken: loginObj.refreshtoken,
             });
         } catch (err) {
             return res.status(err.status || 500).send(err.message);
@@ -76,7 +87,10 @@ module.exports = (app, MongoDB) => {
     const refreshtokenValidate = async (req, res, next) => {
         // Check if the cookie exists
         const reTokenCookie = req.cookies["refresh_token"];
-        const reTokenDB = await MongoDB.services.auth.getRefreshToken(reTokenCookie);
+        console.log(reTokenCookie);
+        const reTokenDB = await MongoDB.services.auth.getRefreshToken(
+            reTokenCookie
+        );
         if (!reTokenDB || reTokenDB._id === undefined) {
             return res.sendStatus(401);
         }
@@ -87,10 +101,12 @@ module.exports = (app, MongoDB) => {
         const refresh_token = req.refresh_token;
         try {
             // Refresh the token
-            const refreshObj = await MongoDB.services.auth.refresh_token(refresh_token);
+            const refreshObj = await MongoDB.services.auth.refresh_token(
+                refresh_token
+            );
 
             res.cookie("refresh_token", refreshObj.refreshtoken, {
-                maxAge: 2.592e+9, // 30 days
+                maxAge: 2.592e9, // 30 days
                 httpOnly: true,
                 secure: process.env.NODE_ENV === "production" ? true : false,
             });
@@ -99,7 +115,7 @@ module.exports = (app, MongoDB) => {
                 admin: loginObj.user.admin, // Helpful for managing front-end reducers
                 token: refreshObj.token,
                 expiresIn: refreshObj.expiresIn,
-                refreshtoken: refreshObj.refreshtoken
+                refreshtoken: refreshObj.refreshtoken,
             });
         } catch (err) {
             return res.status(err.status || 500).send(err.message);
@@ -115,4 +131,4 @@ module.exports = (app, MongoDB) => {
             return res.status(err.status || 500).send(err.message);
         }
     });
-}
+};
