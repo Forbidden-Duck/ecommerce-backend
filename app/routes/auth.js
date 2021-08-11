@@ -72,6 +72,7 @@ module.exports = (app, MongoDB) => {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === "production",
             });
+            delete loginObj.user.password; // Do not send the user password back
             res.status(200).json({
                 user: loginObj.user,
                 token: loginObj.token,
@@ -108,6 +109,7 @@ module.exports = (app, MongoDB) => {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === "production" ? true : false,
             });
+            delete refreshObj.user.password; // Do not send the user password back
             res.status(200).json({
                 user: refreshObj.user,
                 token: refreshObj.token,
