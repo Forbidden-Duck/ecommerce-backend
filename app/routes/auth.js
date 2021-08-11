@@ -73,8 +73,7 @@ module.exports = (app, MongoDB) => {
                 secure: process.env.NODE_ENV === "production",
             });
             res.status(200).json({
-                userid: loginObj.user._id,
-                admin: loginObj.user.admin, // Helpful for managing front-end reducers
+                user: loginObj.user,
                 token: loginObj.token,
                 expiresIn: loginObj.expiresIn,
                 refreshtoken: loginObj.refreshtoken,
@@ -110,8 +109,7 @@ module.exports = (app, MongoDB) => {
                 secure: process.env.NODE_ENV === "production" ? true : false,
             });
             res.status(200).json({
-                userid: refreshObj.user._id,
-                admin: refreshObj.user.admin, // Helpful for managing front-end reducers
+                user: refreshObj.user,
                 token: refreshObj.token,
                 expiresIn: refreshObj.expiresIn,
                 refreshtoken: refreshObj.refreshtoken,
