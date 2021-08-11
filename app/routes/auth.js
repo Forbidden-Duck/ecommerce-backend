@@ -87,7 +87,6 @@ module.exports = (app, MongoDB) => {
     const refreshtokenValidate = async (req, res, next) => {
         // Check if the cookie exists
         const reTokenCookie = req.cookies["refresh_token"];
-        console.log(reTokenCookie);
         const reTokenDB = await MongoDB.services.auth.getRefreshToken(
             reTokenCookie
         );
@@ -112,7 +111,7 @@ module.exports = (app, MongoDB) => {
             });
             res.status(200).json({
                 userid: refreshObj.user._id,
-                admin: loginObj.user.admin, // Helpful for managing front-end reducers
+                admin: refreshObj.user.admin, // Helpful for managing front-end reducers
                 token: refreshObj.token,
                 expiresIn: refreshObj.expiresIn,
                 refreshtoken: refreshObj.refreshtoken,
