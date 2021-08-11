@@ -125,6 +125,11 @@ module.exports = (app, MongoDB) => {
         try {
             // Log user out
             await MongoDB.services.auth.logout(refresh_token);
+            // Ensure to delete the refresh-token
+            res.cookie("refresh_token", "", {
+                maxAge: 0,
+                expires: new Date(0),
+            });
             res.sendStatus(200);
         } catch (err) {
             return res.status(err.status || 500).send(err.message);
