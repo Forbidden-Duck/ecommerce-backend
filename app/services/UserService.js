@@ -9,21 +9,23 @@ const hash = require("../crypto/hash");
 
 module.exports = class UserService {
     /**
-     * 
-     * @param {Mongo} MongoDB 
+     *
+     * @param {Mongo} MongoDB
      */
     constructor(MongoDB) {
-        this.MongoDB = MongoDB
+        this.MongoDB = MongoDB;
     }
 
     /**
      * Find a user
-     * @param {UserSchema} data 
+     * @param {UserSchema} data
      * @returns {UserSchema}
      */
     async find(data) {
         try {
-            return (await this.MongoDB.find("users", data, { limit: 1 }, true))[0];
+            return (
+                await this.MongoDB.find("users", data, { limit: 1 }, true)
+            )[0];
         } catch (err) {
             throw createError(404, "User not found");
         }
@@ -32,7 +34,7 @@ module.exports = class UserService {
     /**
      * Find an array of users
      * @param {UserSchema} data
-     * @returns {UserSchema[]} 
+     * @returns {UserSchema[]}
      */
     async findMany(data) {
         try {
@@ -74,58 +76,72 @@ module.exports = class UserService {
     /**
      * Update user data
      * @param {UserSchema} userObj
+     * @param {string} password
      * @returns {UserSchema}
      */
-    async update(userObj) {
+    async update(userObj, password) {
         // Check if user exists
         const user = await this.find({ _id: userObj._id });
         if (!user || user._id === undefined) {
             throw createError(404, "User not found");
         }
 
-        // Set modifiedAt
-        userObj.modifiedAt = date();
+        if (hash.compare(password, user.password)) {
+            // Set modifiedAt
+            userObj.modifiedAt = date();
 
-        // If password is set, encrypt it
-        if (userObj.password !== undefined) {
-            userObj.password = hash.create(userObj.password);
-        }
+            // If password is set, encrypt it
+            if (userObj.password !== undefined) {
+                userObj.password = hash.create(userObj.password);
+            }
 
-        // Update user
-        try {
-            await this.MongoDB.update("users", { _id: userObj._id }, { $set: userObj });
-        } catch (err) {
-            throw createError(500, err.message);
-        }
+            // Update user
+            try {
+                await this.MongoDB.update(
+                    "users",
+                    { _id: userObj._id },
+                    { $set: userObj }
+                );
+            } catch (err) {
+                throw createError(500, err.message);
+            }
 
-        // Get the updated user
-        const updatedUser = await this.find({ _id: userObj._id });
-        if (!updatedUser || updatedUser._id === undefined) {
-            throw createError(500, "Internal Server Error");
+            // Get the updated user
+            const updatedUser = await this.find({ _id: userObj._id });
+            if (!updatedUser || updatedUser._id === undefined) {
+                throw createError(500, "Internal Server Error");
+            }
+            return updatedUser;
+        } else {
+            throw createError(401, "Unauthorized");
         }
-        return updatedUser;
     }
 
     /**
      * Delete a user
      * @param {string} userID
+     * @param {string} password
      * @returns {boolean}
      */
-    async delete(userID) {
+    async delete(userID, password) {
         // Check if user exists
         const user = await this.find({ _id: userID });
         if (!user || user._id === undefined) {
             throw createError(404, "User not found");
         }
 
-        // Delete the user
-        try {
-            await this.MongoDB.delete("users", { _id: userID });
-        } catch (err) {
-            throw createError(500, err.message);
-        }
+        if (hash.compare(password, user.password)) {
+            // Delete the user
+            try {
+                await this.MongoDB.delete("users", { _id: userID });
+            } catch (err) {
+                throw createError(500, err.message);
+            }
 
-        const userDeleted = await this.find({ _id: userID });
-        return !userDeleted || userDeleted._id === undefined;
+            const userDeleted = await this.find({ _id: userID });
+            return !userDeleted || userDeleted._id === undefined;
+        } else {
+            throw createError(401, "Unauthorized");
+        }
     }
-}
+};
