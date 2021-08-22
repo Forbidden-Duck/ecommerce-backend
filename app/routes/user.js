@@ -72,29 +72,31 @@ module.exports = (app, MongoDB) => {
         }
 
         const body = sanitize(req.body);
-        delete body.createdAt;
-        delete body.modifiedAt; // Do not allow overriding of these
+        const user = body.user || {};
+        delete user.createdAt;
+        delete user.modifiedAt; // Do not allow overriding of these
 
-        if (body.admin && !req.tokenData.admin) {
+        if (user.admin && !req.tokenData.admin) {
             return res
                 .status(403)
                 .send("You can not make your account an admin");
-        } else if (body.admin == false && req.tokenData.admin) {
+        } else if (user.admin == false && req.tokenData.admin) {
             return res
                 .status(403)
                 .send("You can not add admin=false to the body");
         }
 
-        const userObj = MongoDB.client.documentToSchema("users", body, true); // Remove bad fields
+        const userObj = MongoDB.client.documentToSchema("users", user, true); // Remove bad fields
         userObj._id = req.user._id; // Ensure the _id exists
         try {
             const user = await MongoDB.services.user.update(
                 userObj,
-                req.password
+                body.password
             );
             delete user.password; // Don't send back the password;
             res.status(200).json(user);
         } catch (err) {
+            console.log(err.stack);
             res.status(err.status || 500).send(err.message);
         }
     });
@@ -114,7 +116,7 @@ module.exports = (app, MongoDB) => {
         try {
             const hasDelete = await MongoDB.services.user.delete(
                 req.user._id,
-                req.password
+                req.body.password
             );
             if (!hasDelete) {
                 return res.status(500).send("Failed to delete user");

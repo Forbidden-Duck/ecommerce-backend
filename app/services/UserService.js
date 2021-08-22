@@ -80,6 +80,10 @@ module.exports = class UserService {
      * @returns {UserSchema}
      */
     async update(userObj, password) {
+        // Check password exists
+        if (!password || password.length <= 0) {
+            throw createError(400, "Password is required to validate the user");
+        }
         // Check if user exists
         const user = await this.find({ _id: userObj._id });
         if (!user || user._id === undefined) {
@@ -124,6 +128,10 @@ module.exports = class UserService {
      * @returns {boolean}
      */
     async delete(userID, password) {
+        // Check password exists
+        if (!password || password.length <= 0) {
+            throw createError(400, "Password is required to validate the user");
+        }
         // Check if user exists
         const user = await this.find({ _id: userID });
         if (!user || user._id === undefined) {
