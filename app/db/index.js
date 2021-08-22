@@ -15,29 +15,30 @@ const MongoOptions = { useUnifiedTopology: true };
 
 module.exports = class MongoDB {
     /**
-     * 
-     * @param {Mongo} mongo 
+     *
+     * @param {Mongo} mongo
      */
     constructor(mongo) {
         this.mongo = mongo;
         if (this.mongo.auth != undefined) {
-            this.url =
-                `mongodb://${this.mongo.auth.username}:${this.mongo.auth.password}@${this.mongo.host}/`;
+            this.url = `mongodb://${this.mongo.auth.username}:${this.mongo.auth.password}@${this.mongo.host}/`;
         } else {
-            this.url =
-                `mongodb://${this.mongo.host}/`;
+            this.url = `mongodb://${this.mongo.host}/`;
         }
 
         this.schemas = {};
         // Requires all schemas
         const schemasFileName = fs.readdirSync(__dirname + "/schemas");
-        schemasFileName.forEach(file => {
+        schemasFileName.forEach((file) => {
             this.schemas[path.parse(file).name] = require("./schemas/" + file);
         });
 
         return async () => {
             try {
-                this.client = await (new mongodb.MongoClient(this.url + this.mongo.name, MongoOptions)).connect();
+                this.client = await new mongodb.MongoClient(
+                    this.url + this.mongo.name,
+                    MongoOptions
+                ).connect();
                 if (!(this.client instanceof mongodb.MongoClient)) {
                     console.error("Failed to connect to MongoDB Database");
                     return;
@@ -48,8 +49,12 @@ module.exports = class MongoDB {
                 this.db = this.client.db(this.mongo.name);
                 const collections = await this.db.collections();
                 // Create a collection for every schema
-                Object.keys(this.schemas).forEach(schemaName => {
-                    if (collections.find(coll => coll.collectionName === schemaName) == undefined) {
+                Object.keys(this.schemas).forEach((schemaName) => {
+                    if (
+                        collections.find(
+                            (coll) => coll.collectionName === schemaName
+                        ) == undefined
+                    ) {
                         this.db.createCollection(schemaName);
                     }
                 });
@@ -63,7 +68,10 @@ module.exports = class MongoDB {
     static createID() {
         const randomNumber = Math.floor(Math.random() * 999999);
         const currentTime = new Date().getTime();
-        return crypto.createHash("sha256").update((randomNumber + currentTime).toString()).digest("hex");
+        return crypto
+            .createHash("sha256")
+            .update((randomNumber + currentTime).toString())
+            .digest("hex");
     }
 
     getCollection(name) {
@@ -75,7 +83,11 @@ module.exports = class MongoDB {
     }
 
     documentToSchema(schemaName, data, noUndefined) {
-        return this.documentToObject(this.getSchema(schemaName), data, noUndefined);
+        return this.documentToObject(
+            this.getSchema(schemaName),
+            data,
+            noUndefined
+        );
     }
 
     documentToObject(obj, data, noUndefined) {
@@ -96,13 +108,13 @@ module.exports = class MongoDB {
         return Object.assign(obj, data);
     }
 
-    /** 
-     * @param {String} collName 
-     * @param {Object} filter 
+    /**
+     * @param {String} collName
+     * @param {Object} filter
      * @param {mongodb.FindOneOptions} [options]
      * @param {Boolean} [useSchema]
      * @returns {Promise<Array<*>>}
-    */
+     */
     async find(collName, filter, options, useSchema) {
         const collection = this.getCollection(collName);
         let documents = await collection.find(filter, options).toArray();
@@ -112,7 +124,10 @@ module.exports = class MongoDB {
                     const schema = this.getSchema(collName);
                     const document = documents[documentIndex];
                     if (typeof document === "object") {
-                        documents[documentIndex] = Object.assign(schema, document);
+                        documents[documentIndex] = Object.assign(
+                            schema,
+                            document
+                        );
                     }
                 }
             } else {
@@ -123,13 +138,13 @@ module.exports = class MongoDB {
         return documents;
     }
 
-    /** 
-     * @param {String} collName 
+    /**
+     * @param {String} collName
      * @param {String} id
-     * @param {*} document 
+     * @param {*} document
      * @param {Boolean} [useSchema]
      * @returns {Promise<mongodb.InsertOneWriteOpResult>}
-    */
+     */
     insert(collName, id, document, useSchema) {
         const collection = this.getCollection(collName);
         if (useSchema == true) {
@@ -143,34 +158,34 @@ module.exports = class MongoDB {
     }
 
     /**
-     * @param {String} collName 
-     * @param {Object} filter 
+     * @param {String} collName
+     * @param {Object} filter
      * @param {Object} update
      * @param {Boolean} [upsert]
      * @returns {Promise<mongodb.UpdateWriteOpResult>}
-    */
+     */
     update(collName, filter, update, upsert) {
         const collection = this.getCollection(collName);
         return collection.updateOne(filter, update, { upsert: upsert });
     }
 
-    /** 
-     * @param {String} collName 
+    /**
+     * @param {String} collName
      * @param {Object} filter
      * @returns {Promise<mongodb.DeleteWriteOpResultObject>}
-    */
+     */
     delete(collName, filter) {
         const collection = this.getCollection(collName);
         return collection.deleteOne(filter);
     }
 
-    /** 
-     * @param {String} collName 
+    /**
+     * @param {String} collName
      * @param {Object} filter
      * @returns {Promise<mongodb.DeleteWriteOpResultObject>}
-    */
+     */
     deleteMany(collName, filter) {
         const collection = this.getCollection(collName);
         return collection.deleteMany(filter);
     }
-}
+};
