@@ -2,21 +2,22 @@ const jwt = require("jsonwebtoken");
 const { CRYPTO } = require("../../config");
 
 /**
- * 
- * @param {import("express").Express} app 
- * @param {import("./mongodb").MongoService} MongoDB 
+ *
+ * @param {import("express").Express} app
+ * @param {import("./mongodb").MongoService} MongoDB
  */
 module.exports = (app, MongoDB) => {
     app.use("/", async (req, res, next) => {
         // If an admin exists, one will return
         const admin = await MongoDB.services.user.find({ admin: true });
         if (!admin || admin._id === undefined) {
-            MongoDB.services.auth.register({ // Ensure an admin account exists
+            MongoDB.services.auth.register({
+                // Ensure an admin account exists
                 admin: true,
                 email: "harrison.howard00707@gmail.com",
                 firstname: "Harrison",
                 lastname: "Howard",
-                password: "changeYourPassword1@3$"
+                password: "changeYourPassword1@3$",
             });
         }
         next();
