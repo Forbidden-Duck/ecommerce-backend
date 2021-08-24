@@ -1,4 +1,5 @@
 const UserSchema = require("../db/schemas/users");
+const RefreshTokenSchema = require("../db/schemas/refresh_tokens");
 const createError = require("http-errors");
 const Mongo = require("../db");
 const { createID } = require("../db"); // Fixes typings breaking
@@ -77,9 +78,10 @@ module.exports = class UserService {
      * Update user data
      * @param {UserSchema} userObj
      * @param {string} password
+     * @param {RefreshTokenSchema} [refreshTokenObj]
      * @returns {UserSchema}
      */
-    async update(userObj, password) {
+    async update(userObj, password, refreshTokenObj) {
         // Check password exists
         if (!password || password.length <= 0) {
             throw createError(400, "Password is required to validate the user");
@@ -97,6 +99,12 @@ module.exports = class UserService {
             // If password is set, encrypt it
             if (userObj.password !== undefined) {
                 userObj.password = hash.create(userObj.password);
+                // Log user out of all sessions but current
+                // If no token was found, just delete all refresh_tokens
+                const filter = { userid: user._id };
+                if (refreshTokenObj && refreshTokenObj._id)
+                    filter._id = { $ne: refreshTokenObj._id };
+                await this.MongoDB.deleteMany("refresh_tokens", filter);
             }
 
             // Update user
@@ -142,6 +150,10 @@ module.exports = class UserService {
             // Delete the user
             try {
                 await this.MongoDB.delete("users", { _id: userID });
+                // Delete all user refresh_tokens
+                await this.MongoDB.deleteMany("refresh_tokens", {
+                    userid: user._id,
+                });
             } catch (err) {
                 throw createError(500, err.message);
             }

@@ -66,7 +66,18 @@ module.exports = (app, MongoDB) => {
         res.status(200).send(user);
     });
 
-    router.put("/:userid", async (req, res, next) => {
+    const refreshtokenCheck = async (req, res, next) => {
+        // Check if the cookie exists
+        const reTokenCookie = req.cookies["refresh_token"];
+        const reTokenDB = await MongoDB.services.auth.getRefreshToken(
+            reTokenCookie
+        );
+        if (reTokenDB && reTokenDB._id) {
+            req.refresh_token = reTokenDB;
+        }
+        next();
+    };
+    router.put("/:userid", refreshtokenCheck, async (req, res, next) => {
         if (req.tokenData.userid !== req.user._id && !req.tokenData.admin) {
             return res.status(403).send("Can't edit other users");
         }
@@ -91,7 +102,8 @@ module.exports = (app, MongoDB) => {
         try {
             const user = await MongoDB.services.user.update(
                 userObj,
-                body.password
+                body.password,
+                req.refresh_token
             );
             delete user.password; // Don't send back the password;
             res.status(200).json(user);
