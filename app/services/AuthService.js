@@ -21,9 +21,9 @@ const refreshtoken = require("../crypto/refreshtoken");
 
 module.exports = class AuthService {
     /**
-     * 
-     * @param {Mongo} MongoDB 
-     * @param {UserService} UserSVC 
+     *
+     * @param {Mongo} MongoDB
+     * @param {UserService} UserSVC
      */
     constructor(MongoDB, UserSVC) {
         this.MongoDB = MongoDB;
@@ -32,16 +32,23 @@ module.exports = class AuthService {
 
     /**
      * Get a refresh token
-     * @param {string} reTokenCookie 
+     * @param {string} reTokenCookie
      * @returns {RefreshTokenSchema}
      */
     async getRefreshToken(reTokenCookie) {
-        return (await this.MongoDB.find("refresh_tokens", { _id: reTokenCookie }, { limit: 1 }, true))[0];
+        return (
+            await this.MongoDB.find(
+                "refresh_tokens",
+                { _id: reTokenCookie },
+                { limit: 1 },
+                true
+            )
+        )[0];
     }
 
     /**
      * Register a new user
-     * @param {UserSchema} userObj 
+     * @param {UserSchema} userObj
      * @returns {UserSchema}
      */
     async register(userObj) {
@@ -59,8 +66,8 @@ module.exports = class AuthService {
 
     /**
      * Login as a user
-     * @param {string} email 
-     * @param {string} password 
+     * @param {string} email
+     * @param {string} password
      * @returns {LoginReturn}
      */
     async login(email, password) {
@@ -79,11 +86,16 @@ module.exports = class AuthService {
                 { algorithm: "HS256", expiresIn: "15m" }
             );
             const reToken = refreshtoken.create(user._id);
-            const expiresIn = new Date(Date.now() + 900000) // 15 minutes
+            const expiresIn = new Date(Date.now() + 900000); // 15 minutes
 
             // Insert refresh token
             try {
-                this.MongoDB.insert("refresh_tokens", reToken, { userid: user._id, createdAt: date() }, true);
+                this.MongoDB.insert(
+                    "refresh_tokens",
+                    reToken,
+                    { userid: user._id, createdAt: date() },
+                    true
+                );
             } catch (err) {
                 throw createError(500, "Internal Server Error");
             }
@@ -92,7 +104,7 @@ module.exports = class AuthService {
                 user,
                 token,
                 refreshtoken: reToken,
-                expiresIn
+                expiresIn,
             };
         } else {
             throw createError(401, "Unauthorized");
@@ -101,18 +113,23 @@ module.exports = class AuthService {
 
     /**
      * Logout as a user
-     * @param {RefreshTokenSchema} refreshTokenObj 
+     * @param {RefreshTokenSchema} refreshTokenObj
      */
     async logout(refreshTokenObj) {
         // Check if the user exists
-        const user = await this.UserService.find({ _id: refreshTokenObj.userid });
+        const user = await this.UserService.find({
+            _id: refreshTokenObj.userid,
+        });
         if (!user || user._id === undefined) {
             throw createError(404, "User not found");
         }
 
         // Delete refresh token
         try {
-            await this.MongoDB.delete("refresh_tokens", { _id: refreshTokenObj._id, userid: refreshTokenObj.userid });
+            await this.MongoDB.delete("refresh_tokens", {
+                _id: refreshTokenObj._id,
+                userid: refreshTokenObj.userid,
+            });
         } catch (err) {
             throw createError(500, "Internal Server Error");
         }
@@ -120,35 +137,45 @@ module.exports = class AuthService {
 
     /**
      * Refresh a users tokens
-     * @param {RefreshTokenSchema} refreshTokenObj 
+     * @param {RefreshTokenSchema} refreshTokenObj
      * @returns {LoginReturn}
      */
     async refresh_token(refreshTokenObj) {
         // Check if the user exists
-        const user = await this.UserService.find({ _id: refreshTokenObj.userid });
+        const user = await this.UserService.find({
+            _id: refreshTokenObj.userid,
+        });
         if (!user || user._id === undefined) {
             throw createError(404, "User not found");
         }
 
         // Delete refresh token
         try {
-            await this.MongoDB.delete("refresh_tokens", { _id: refreshTokenObj._id, userid: refreshTokenObj.userid });
+            await this.MongoDB.delete("refresh_tokens", {
+                _id: refreshTokenObj._id,
+                userid: refreshTokenObj.userid,
+            });
         } catch (err) {
             throw createError(500, "Internal Server Error");
         }
 
         // Create new token, refresh token and expiry
         const newToken = jwt.sign(
-            { userid: user._id, email: user.email },
+            { userid: user._id, email: user.email, admin: user.admin },
             CRYPTO.jwtkey,
             { algorithm: "HS256", expiresIn: "15m" }
         );
         const newReToken = refreshtoken.create(user._id);
-        const expiresIn = new Date(Date.now() + 900000) // 15 minutes
+        const expiresIn = new Date(Date.now() + 900000); // 15 minutes
 
         // Insert refresh token
         try {
-            this.MongoDB.insert("refresh_tokens", newReToken, { userid: user._id, createdAt: date() }, true);
+            this.MongoDB.insert(
+                "refresh_tokens",
+                newReToken,
+                { userid: user._id, createdAt: date() },
+                true
+            );
         } catch (err) {
             throw createError(500, "Internal Server Error");
         }
@@ -157,7 +184,7 @@ module.exports = class AuthService {
             user,
             token: newToken,
             refreshtoken: newReToken,
-            expiresIn
+            expiresIn,
         };
     }
-}
+};
