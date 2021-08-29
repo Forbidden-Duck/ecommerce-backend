@@ -77,13 +77,18 @@ module.exports = class UserService {
     /**
      * Update user data
      * @param {UserSchema} userObj
-     * @param {string} password
+     * @param {object} password
      * @param {RefreshTokenSchema} [refreshTokenObj]
+     * @param {boolean} [admin]
      * @returns {UserSchema}
      */
-    async update(userObj, password, refreshTokenObj) {
+    async update(userObj, password, refreshTokenObj, admin) {
         // Check password exists
-        if (!password || password.length <= 0) {
+        if (
+            typeof password !== "object" ||
+            typeof password.password !== "string" ||
+            password.password.length <= 0
+        ) {
             throw createError(400, "Password is required to validate the user");
         }
         // Check if user exists
@@ -91,8 +96,21 @@ module.exports = class UserService {
         if (!user || user._id === undefined) {
             throw createError(404, "User not found");
         }
+        // Get the admin user if admin is true
+        let adminUser;
+        if (admin) {
+            adminUser = await this.find({ _id: password.userid });
+            if (!adminUser || adminUser._id === undefined) {
+                throw createError(404, "Admin user not found");
+            }
+        }
 
-        if (hash.compare(password, user.password)) {
+        if (
+            hash.compare(
+                password.password,
+                admin ? adminUser.password : user.password
+            )
+        ) {
             // Set modifiedAt
             userObj.modifiedAt = date();
 
@@ -132,21 +150,40 @@ module.exports = class UserService {
     /**
      * Delete a user
      * @param {string} userID
-     * @param {string} password
+     * @param {object} password
+     * @param {boolean} [admin]
      * @returns {boolean}
      */
-    async delete(userID, password) {
+    async delete(userID, password, admin) {
         // Check password exists
-        if (!password || password.length <= 0) {
+        if (
+            typeof password !== "object" ||
+            typeof password.password !== "string" ||
+            password.password.length <= 0
+        ) {
             throw createError(400, "Password is required to validate the user");
         }
+
         // Check if user exists
         const user = await this.find({ _id: userID });
         if (!user || user._id === undefined) {
             throw createError(404, "User not found");
         }
+        // Get the admin user if admin is true
+        let adminUser;
+        if (admin) {
+            adminUser = await this.find({ _id: password.userid });
+            if (!adminUser || adminUser._id === undefined) {
+                throw createError(404, "Admin user not found");
+            }
+        }
 
-        if (hash.compare(password, user.password)) {
+        if (
+            hash.compare(
+                password.password,
+                admin ? adminUser.password : user.password
+            )
+        ) {
             // Delete the user
             try {
                 await this.MongoDB.delete("users", { _id: userID });

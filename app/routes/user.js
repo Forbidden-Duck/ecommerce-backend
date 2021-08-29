@@ -102,8 +102,9 @@ module.exports = (app, MongoDB) => {
         try {
             const user = await MongoDB.services.user.update(
                 userObj,
-                body.password,
-                req.refresh_token
+                { password: body.password, userid: req.tokenData.userid },
+                req.refresh_token,
+                req.tokenData.admin
             );
             delete user.password; // Don't send back the password;
             res.status(200).json(user);
@@ -116,6 +117,7 @@ module.exports = (app, MongoDB) => {
         if (req.tokenData.userid !== req.user._id && !req.tokenData.admin) {
             return res.status(403).send("Can't delete other users");
         }
+
         // Admins can't delete their own or other admin accounts
         const user = await MongoDB.services.user.find({ _id: req.user._id });
         if (user && user.admin) {
@@ -124,10 +126,12 @@ module.exports = (app, MongoDB) => {
                 .send("Can't delete your or other admin accounts");
         }
 
+        const body = sanitize(req.body);
         try {
             const hasDelete = await MongoDB.services.user.delete(
                 req.user._id,
-                req.body.password
+                { password: body.password, userid: req.tokenData.userid },
+                req.tokenData.admin
             );
             if (!hasDelete) {
                 return res.status(500).send("Failed to delete user");
