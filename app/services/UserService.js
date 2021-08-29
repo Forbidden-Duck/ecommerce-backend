@@ -167,15 +167,6 @@ module.exports = class UserService {
      * @returns {boolean}
      */
     async delete(userID, password, admin) {
-        // Check password exists
-        if (
-            typeof password !== "object" ||
-            typeof password.password !== "string" ||
-            password.password.length <= 0
-        ) {
-            throw createError(400, "Password is required to validate the user");
-        }
-
         // Check if user exists
         const user = await this.find({ _id: userID });
         if (!user || user._id === undefined) {
@@ -189,8 +180,27 @@ module.exports = class UserService {
                 throw createError(404, "Admin user not found");
             }
         }
+        // Check password exists
+        if (
+            typeof password !== "object" ||
+            typeof password.password !== "string" ||
+            password.password.length <= 0
+        ) {
+            // No password is required if authed under Google
+            if (
+                (admin && !adminUser.authedGoogle) ||
+                (!admin && !user.authedGoogle)
+            ) {
+                throw createError(
+                    400,
+                    "Password is required to validate the user"
+                );
+            }
+        }
 
         if (
+            (admin && adminUser.authedGoogle) ||
+            (!admin && user.authedGoogle) ||
             hash.compare(
                 password.password,
                 admin ? adminUser.password : user.password
