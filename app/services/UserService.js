@@ -123,6 +123,7 @@ module.exports = class UserService {
                 if (refreshTokenObj && refreshTokenObj._id)
                     filter._id = { $ne: refreshTokenObj._id };
                 await this.MongoDB.deleteMany("refresh_tokens", filter);
+                userObj.authedGoogle = false; // Set to false once the user's password has been changed (unless already false)
             }
 
             // Update user

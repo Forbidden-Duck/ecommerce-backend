@@ -2,6 +2,7 @@ const express = require("express");
 const { createID } = require("../db");
 const router = express.Router();
 const sanitize = require("mongo-sanitize");
+const superagent = require("superagent");
 
 const UserSchema = require("../db/schemas/users");
 
@@ -78,6 +79,54 @@ module.exports = (app, MongoDB) => {
                 token: loginObj.token,
                 expiresIn: loginObj.expiresIn,
                 refreshtoken: loginObj.refreshtoken,
+            });
+        } catch (err) {
+            return res.status(err.status || 500).send(err.message);
+        }
+    });
+
+    const googleValidate = async (req, res, next) => {
+        // Validate the tokenid
+        const headerToken = req.headers["authorization"];
+        if (!headerToken) {
+            return res.status(400).send("Missing authorization header");
+        }
+        let response;
+        try {
+            response = await superagent
+                .get("https://oauth2.googleapis.com/tokeninfo")
+                .query({ id_token: headerToken.split(" ")[1] });
+        } catch (err) {
+            return res.status(err.status || 500).send(err.response.body.error);
+        }
+        if (response.status !== 200) {
+            return res.sendStatus(401);
+        }
+        req.googleAuth = response.body;
+        next();
+    };
+    router.post("/google", googleValidate, async (req, res, next) => {
+        const googleProfile = {
+            email: req.googleAuth.email,
+            firstname: req.googleAuth.given_name,
+            lastname: req.googleAuth.family_name,
+            authedGoogle: true,
+        };
+        try {
+            const googleAuth = await MongoDB.services.auth.google(
+                googleProfile
+            );
+            res.cookie("refresh_token", googleAuth.refreshtoken, {
+                maxAge: 2.592e9, // 30 days
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+            });
+            delete googleAuth.user.password; // Do not send the user password back
+            res.status(200).json({
+                user: googleAuth.user,
+                token: googleAuth.token,
+                expiresIn: googleAuth.expiresIn,
+                refreshtoken: googleAuth.refreshtoken,
             });
         } catch (err) {
             return res.status(err.status || 500).send(err.message);

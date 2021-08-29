@@ -25,7 +25,8 @@
     "mongodb": "^3.6.9",
     "morgan": "^1.10.0",
     "rate-limit-mongo": "^2.3.1",
-    "stripe": "^8.157.0"
+    "stripe": "^8.157.0",
+    "superagent": "^6.1.0"
   },
   "devDependencies": {
     "@types/crypto-js": "^4.0.1",

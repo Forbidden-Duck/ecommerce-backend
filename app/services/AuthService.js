@@ -112,6 +112,58 @@ module.exports = class AuthService {
     }
 
     /**
+     * Login a user with Google
+     * @param {UserSchema} googleProfle
+     * @returns {LoginReturn}
+     */
+    async google(googleProfle) {
+        // Try to register the user
+        // if status 409 returns, skip ahead
+        let user;
+        try {
+            googleProfle.password = refreshtoken.create(googleProfle.email);
+            user = await this.register(googleProfle);
+        } catch (err) {
+            if (err.status === 409) {
+                user = await this.UserService.find({
+                    email: googleProfle.email,
+                });
+            } else {
+                throw err;
+            }
+        }
+
+        // Log the user in (no password authentication)
+        // Create token, refresh token and expiry
+        const token = jwt.sign(
+            { userid: user._id, email: user.email, admin: user.admin },
+            CRYPTO.jwtkey,
+            { algorithm: "HS256", expiresIn: "15m" }
+        );
+        const reToken = refreshtoken.create(user._id);
+        const expiresIn = new Date(Date.now() + 900000); // 15 minutes
+
+        // Insert refresh token
+        try {
+            this.MongoDB.insert(
+                "refresh_tokens",
+                reToken,
+                { userid: user._id, createdAt: date() },
+                true
+            );
+        } catch (err) {
+            throw createError(500, "Internal Server Error");
+        }
+
+        return {
+            user,
+            token,
+            refreshtoken: reToken,
+            expiresIn,
+        };
+    }
+
+    /**
      * Logout as a user
      * @param {RefreshTokenSchema} refreshTokenObj
      */
