@@ -7,15 +7,17 @@ const ProductSchema = require("../db/schemas/products");
 
 /**
  * User Router
- * @param {router} app 
- * @param {import("../loaders/mongodb").MongoService} MongoDB 
+ * @param {router} app
+ * @param {import("../loaders/mongodb").MongoService} MongoDB
  */
 module.exports = (app, MongoDB) => {
     app.use("/api/product", router);
 
     router.param("productid", async (req, res, next, productid) => {
         try {
-            const product = await MongoDB.services.product.find({ _id: productid });
+            const product = await MongoDB.services.product.find({
+                _id: productid,
+            });
             if (!product || product._id === undefined) {
                 return res.status(404).send("Product not found");
             }
@@ -28,10 +30,16 @@ module.exports = (app, MongoDB) => {
 
     router.get("/", async (req, res, next) => {
         const body = sanitize(req.body);
-        const productObj = MongoDB.client.documentToSchema("products", body, true);
+        const productObj = MongoDB.client.documentToSchema(
+            "products",
+            body,
+            true
+        );
 
         try {
-            const products = await MongoDB.services.product.findMany(productObj);
+            const products = await MongoDB.services.product.findMany(
+                productObj
+            );
             if (!products || products.length <= 0) {
                 return res.status(404).send("Products not found");
             }
@@ -68,7 +76,11 @@ module.exports = (app, MongoDB) => {
         const body = sanitize(req.body);
         delete body.createdAt;
         delete body.modifiedAt; // Do not allow overriding these
-        const productObj = MongoDB.client.documentToSchema("products", body, true);
+        const productObj = MongoDB.client.documentToSchema(
+            "products",
+            body,
+            true
+        );
         productObj._id = req.product._id; // Ensure the _id exists
         try {
             const product = await MongoDB.services.product.update(productObj);
@@ -84,7 +96,9 @@ module.exports = (app, MongoDB) => {
         }
 
         try {
-            const hasDelete = await MongoDB.services.product.delete(req.product._id);
+            const hasDelete = await MongoDB.services.product.delete(
+                req.product._id
+            );
             if (!hasDelete) {
                 return res.status(500).send("Failed to delete product");
             }
@@ -93,4 +107,4 @@ module.exports = (app, MongoDB) => {
             res.status(err.status || 500).send(err.message);
         }
     });
-}
+};
