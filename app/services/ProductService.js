@@ -6,21 +6,23 @@ const date = require("../db/date");
 
 module.exports = class ProductService {
     /**
-     * 
-     * @param {Mongo} MongoDB 
+     *
+     * @param {Mongo} MongoDB
      */
     constructor(MongoDB) {
-        this.MongoDB = MongoDB
+        this.MongoDB = MongoDB;
     }
 
     /**
      * Find a product
-     * @param {ProductSchema} data 
+     * @param {ProductSchema} data
      * @returns {ProductSchema}
      */
     async find(data) {
         try {
-            return (await this.MongoDB.find("products", data, { limit: 1 }, true))[0];
+            return (
+                await this.MongoDB.find("products", data, { limit: 1 }, true)
+            )[0];
         } catch (err) {
             throw createError(404, "Product not found");
         }
@@ -28,12 +30,12 @@ module.exports = class ProductService {
 
     /**
      * Find an array of products
-     * @param {ProductSchema} data 
+     * @param {ProductSchema} data
      * @returns {ProductSchema[]}
      */
     async findMany(data) {
         try {
-            return (await this.MongoDB.find("products", data, {}, true));
+            return await this.MongoDB.find("products", data, {}, true);
         } catch (err) {
             throw createError(404, "Products not found");
         }
@@ -41,7 +43,7 @@ module.exports = class ProductService {
 
     /**
      * Create a new product
-     * @param {ProductSchema} productObj 
+     * @param {ProductSchema} productObj
      * @returns {ProductSchema}
      */
     async create(productObj) {
@@ -55,7 +57,12 @@ module.exports = class ProductService {
 
         // Create the product
         try {
-            await this.MongoDB.insert("products", productObj._id, productObj, true);
+            await this.MongoDB.insert(
+                "products",
+                productObj._id,
+                productObj,
+                true
+            );
         } catch (err) {
             throw createError(500, err.message);
         }
@@ -70,7 +77,7 @@ module.exports = class ProductService {
 
     /**
      * Update product data
-     * @param {ProductSchema} productObj 
+     * @param {ProductSchema} productObj
      * @returns {ProductSchema}
      */
     async update(productObj) {
@@ -85,7 +92,11 @@ module.exports = class ProductService {
 
         // Update product
         try {
-            await this.MongoDB.update("products", { _id: product._id }, { $set: productObj });
+            await this.MongoDB.update(
+                "products",
+                { _id: product._id },
+                { $set: productObj }
+            );
         } catch (err) {
             throw createError(500, err.message);
         }
@@ -100,7 +111,7 @@ module.exports = class ProductService {
 
     /**
      * Delete a product
-     * @param {string} productID 
+     * @param {string} productID
      * @returns {boolean}
      */
     async delete(productID) {
@@ -120,4 +131,4 @@ module.exports = class ProductService {
         const productDeleted = await this.find({ _id: productID });
         return !productDeleted || productDeleted._id === undefined;
     }
-}
+};
