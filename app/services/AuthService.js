@@ -54,14 +54,14 @@ module.exports = class AuthService {
     async register(userObj) {
         // Check if user already exists
         const user = await this.UserService.find({ email: userObj.email });
-        if (!user || user._id !== undefined) {
+        if (user && user._id !== undefined) {
             throw createError(409, "Email already registered");
         }
 
         // Encrypt password
         userObj.password = hash.create(userObj.password);
         // Create user
-        return this.UserService.create(userObj);
+        return await this.UserService.create(userObj);
     }
 
     /**
