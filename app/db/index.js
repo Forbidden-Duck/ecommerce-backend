@@ -119,20 +119,12 @@ module.exports = class MongoDB {
         const collection = this.getCollection(collName);
         let documents = await collection.find(filter, options).toArray();
         if (useSchema == true) {
-            if (documents.length != 0) {
-                for (const documentIndex in documents) {
-                    const schema = this.getSchema(collName);
-                    const document = documents[documentIndex];
-                    if (typeof document === "object") {
-                        documents[documentIndex] = Object.assign(
-                            schema,
-                            document
-                        );
-                    }
-                }
-            } else {
+            for (const documentIndex in documents) {
                 const schema = this.getSchema(collName);
-                documents[0] = schema;
+                const document = documents[documentIndex];
+                if (typeof document === "object") {
+                    documents[documentIndex] = Object.assign(schema, document);
+                }
             }
         }
         return documents;
