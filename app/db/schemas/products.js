@@ -15,7 +15,7 @@ module.exports = {
     _id: undefined,
     name: undefined,
     description: undefined,
-    price: undefined,
+    price: 0,
     createdAt: undefined,
-    modifiedAt: undefined
+    modifiedAt: undefined,
 };
