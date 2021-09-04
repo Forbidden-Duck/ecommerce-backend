@@ -8,7 +8,7 @@ const { PORT } = require("../config");
 
 (async () => {
     await loaders(app);
-    if (process.env.NODE_ENV === "production") {
+    if (process.env.PROTOCOL === "https") {
         const fs = require("fs");
         const httpsOptions = {
             key: fs.readFileSync(__dirname + "/../cert/key.pem"),
