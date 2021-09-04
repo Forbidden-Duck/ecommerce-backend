@@ -19,14 +19,14 @@ const ProductService = require("./ProductService");
 
 module.exports = class CartService {
     /**
-     * 
-     * @param {Mongo} MongoDB 
+     *
+     * @param {Mongo} MongoDB
      * @param {OrderService} OrderSVC
      * @param {UserService} UserSVC
      * @param {ProductService} ProductSVC
      */
     constructor(MongoDB, OrderSVC, UserSVC, ProductSVC) {
-        this.MongoDB = MongoDB
+        this.MongoDB = MongoDB;
         this.OrderService = OrderSVC;
         this.UserService = UserSVC;
         this.ProductService = ProductSVC;
@@ -34,21 +34,36 @@ module.exports = class CartService {
 
     /**
      * Find a cart
-     * @param {CartSchema} data 
+     * @param {CartSchema} data
      * @returns {CartSchema}
      */
     async find(data) {
         try {
-            return (await this.MongoDB.find("carts", data, { limit: 1 }, true))[0];
+            return (
+                await this.MongoDB.find("carts", data, { limit: 1 }, true)
+            )[0];
         } catch (err) {
             throw createError(404, "Cart not found");
         }
     }
 
     /**
+     * Find a cart
+     * @param {CartSchema} data
+     * @returns {CartSchema[]}
+     */
+    async findMany(data) {
+        try {
+            return await this.MongoDB.find("carts", data, {}, true);
+        } catch (err) {
+            throw createError(404, "Carts not found");
+        }
+    }
+
+    /**
      * Find a cart item
-     * @param {string} cartID 
-     * @param {CartItem} data 
+     * @param {string} cartID
+     * @param {CartItem} data
      */
     async findItem(cartID, data) {
         // Check if the cart exists
@@ -58,8 +73,9 @@ module.exports = class CartService {
         }
 
         // Find the item on that cart
-        return cart.items.find(cartItem => {
-            for (const [key, value] of Object.entries(data)) { // Compare two objects
+        return cart.items.find((cartItem) => {
+            for (const [key, value] of Object.entries(data)) {
+                // Compare two objects
                 if (cartItem[key] !== value) {
                     return false;
                 }
@@ -87,7 +103,7 @@ module.exports = class CartService {
             _id: createID(),
             userid: user._id,
             createdAt: date(),
-            modifiedAt: 0
+            modifiedAt: 0,
         };
 
         // Create the cart
@@ -107,7 +123,7 @@ module.exports = class CartService {
 
     /**
      * Update cart data
-     * @param {CartSchema} cartObj 
+     * @param {CartSchema} cartObj
      * @returns {CartSchema}
      */
     async update(cartObj) {
@@ -122,7 +138,11 @@ module.exports = class CartService {
 
         // Update cart
         try {
-            await this.MongoDB.update("carts", { _id: cartObj._id }, { $set: cartObj });
+            await this.MongoDB.update(
+                "carts",
+                { _id: cartObj._id },
+                { $set: cartObj }
+            );
         } catch (err) {
             throw createError(500, err.message);
         }
@@ -133,6 +153,29 @@ module.exports = class CartService {
             throw createError(500, "Internal Server Error");
         }
         return updatedCart;
+    }
+
+    /**
+     * Delete a cart
+     * @param {string} cartID
+     * @returns {boolean}
+     */
+    async delete(cartID) {
+        // Check if the cart exists
+        const cart = await this.find({ _id: cartID });
+        if (!cart || cart._id === undefined) {
+            throw createError(404, "Cart not found");
+        }
+
+        // Delete the cart
+        try {
+            await this.MongoDB.delete("carts", { _id: cartID });
+        } catch (err) {
+            throw createError(500, err.message);
+        }
+
+        const cartDeleted = await this.find({ _id: cartID });
+        return !cartDeleted || cartDeleted._id === undefined;
     }
 
     /**
@@ -153,7 +196,9 @@ module.exports = class CartService {
             throw createError(400, "No items in the cart");
         }
         for (const item of cart.items) {
-            const product = await this.ProductService.find({ _id: item.productid });
+            const product = await this.ProductService.find({
+                _id: item.productid,
+            });
             if (!product || product._id === undefined) {
                 throw createError(404, "Product item not found");
             }
@@ -161,8 +206,14 @@ module.exports = class CartService {
 
         // Get total price of all items
         const total = cart.items.reduce((total, item) => {
-            return total += item.price;
+            return (total += item.price);
         }, 0);
+
+        // Delete cart
+        const hasDeletedCart = this.delete(cart._id);
+        if (!hasDeletedCart) {
+            throw createError(500, "Failed to delete the cart on checkout");
+        }
 
         // Create order
         /**
@@ -172,7 +223,7 @@ module.exports = class CartService {
             userid: cart.userid,
             total: total,
             items: cart.items,
-            status: "COMPLETED"
+            status: "COMPLETED",
         };
         const order = await this.OrderService.create(orderObj);
 
@@ -180,7 +231,7 @@ module.exports = class CartService {
         const charge = "Not available"; // Stripe not connected yet
         return {
             order,
-            charge: charge
+            charge: charge,
         };
     }
-}
+};
