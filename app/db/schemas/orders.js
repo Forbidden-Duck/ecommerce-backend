@@ -26,8 +26,8 @@ module.exports = {
     _id: undefined,
     userid: undefined,
     status: undefined,
-    total: undefined,
+    total: 0,
     items: [],
     createdAt: undefined,
-    modifiedAt: undefined
+    modifiedAt: undefined,
 };
