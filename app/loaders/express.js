@@ -12,9 +12,32 @@ const expressRateLimit = require("express-rate-limit");
 const mongoRateLimitStore = require("rate-limit-mongo");
 const rateLimitExpiry = 15 * 60 * 1000; // 15 minutes
 
+// Production
+const express = require("express");
+const path = require("path");
+
 module.exports = (app) => {
     app.use(cors({ credentials: true, origin: true }));
-    app.use(helmet());
+    app.use(
+        helmet({
+            contentSecurityPolicy: {
+                directives: {
+                    defaultSrc: ["'self'"],
+                    scriptSrc: ["'self'", "https://apis.google.com"],
+                    styleSrc: [
+                        "'self'",
+                        "https://fonts.googleapis.com",
+                        "'unsafe-inline'",
+                    ],
+                    imgSrc: ["'self'", "data:"],
+                    fontSrc: ["'self'", "https://fonts.gstatic.com"],
+                    objectSrc: ["'self'"],
+                    mediaSrc: ["'self'"],
+                    frameSrc: ["https://accounts.google.com/"],
+                },
+            },
+        })
+    );
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({ extended: true }));
     app.use(cookieParser());
@@ -33,5 +56,8 @@ module.exports = (app) => {
             max: 1500,
         })
     );
+    if (process.env.NODE_ENV === "production") {
+        app.use(express.static(path.resolve(__dirname, "../../build")));
+    }
     return app;
 };

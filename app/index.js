@@ -2,7 +2,6 @@
 require("dotenv").config({ path: __dirname + "/../process.env" });
 
 const app = require("express")();
-const http = require("http");
 const https = require("https");
 const loaders = require("./loaders");
 const { PORT } = require("../config");

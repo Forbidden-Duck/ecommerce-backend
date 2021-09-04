@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const { CRYPTO } = require("../../config");
+const path = require("path");
 
 /**
  *
@@ -48,4 +49,12 @@ module.exports = (app, MongoDB) => {
     require("../routes/product")(app, MongoDB);
     require("../routes/cart")(app, MongoDB);
     require("../routes/order")(app, MongoDB);
+
+    app.use((req, res, next) => {
+        if (process.env.NODE_ENV === "production") {
+            res.sendFile(path.resolve(__dirname, "../../build", "index.html"));
+        } else {
+            next();
+        }
+    });
 };
