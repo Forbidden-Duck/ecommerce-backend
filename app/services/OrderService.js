@@ -7,21 +7,36 @@ const date = require("../db/date");
 
 module.exports = class OrderService {
     /**
-     * 
-     * @param {Mongo} MongoDB 
+     *
+     * @param {Mongo} MongoDB
      */
     constructor(MongoDB) {
-        this.MongoDB = MongoDB
+        this.MongoDB = MongoDB;
     }
 
     /**
      * Find a order
-     * @param {OrderSchema} data 
+     * @param {OrderSchema} data
      * @returns {OrderSchema}
      */
     async find(data) {
         try {
-            return (await this.MongoDB.find("orders", data, { limit: 1 }, true))[0];
+            return (
+                await this.MongoDB.find("orders", data, { limit: 1 }, true)
+            )[0];
+        } catch (err) {
+            throw createError(404, "Order not found");
+        }
+    }
+
+    /**
+     * Find a order
+     * @param {OrderSchema} data
+     * @returns {OrderSchema[]}
+     */
+    async findMany(data) {
+        try {
+            return await this.MongoDB.find("orders", data, {}, true);
         } catch (err) {
             throw createError(404, "Order not found");
         }
@@ -30,7 +45,7 @@ module.exports = class OrderService {
     /**
      * Find an order item
      * @param {string} orderID OrderID specific to the item
-     * @param {OrderItem} data 
+     * @param {OrderItem} data
      */
     async findItem(orderID, data) {
         // Check if order exists
@@ -40,8 +55,9 @@ module.exports = class OrderService {
         }
 
         // Find the item on that order
-        return order.items.find(orderItem => {
-            for (const [key, value] of Object.entries(data)) { // Compare two objects
+        return order.items.find((orderItem) => {
+            for (const [key, value] of Object.entries(data)) {
+                // Compare two objects
                 if (orderItem[key] !== value) {
                     return false;
                 }
@@ -52,7 +68,7 @@ module.exports = class OrderService {
 
     /**
      * Find all user specific orders
-     * @param {string} userID 
+     * @param {string} userID
      * @returns {OrderSchema[]}
      */
     async findOrdersByUser(userID) {
@@ -109,7 +125,11 @@ module.exports = class OrderService {
 
         // Update order
         try {
-            await this.MongoDB.update("orders", { _id: orderObj._id }, { $set: orderObj });
+            await this.MongoDB.update(
+                "orders",
+                { _id: orderObj._id },
+                { $set: orderObj }
+            );
         } catch (err) {
             throw createError(500, err.message);
         }
@@ -124,7 +144,7 @@ module.exports = class OrderService {
 
     /**
      * Delete a order
-     * @param {string} orderID 
+     * @param {string} orderID
      * @returns {boolean}
      */
     async delete(orderID) {
@@ -144,4 +164,4 @@ module.exports = class OrderService {
         const orderDeleted = await this.find({ _id: orderID });
         return !orderDeleted || orderDeleted._id === undefined;
     }
-}
+};

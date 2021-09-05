@@ -8,8 +8,8 @@ const OrderItemSchema = require("../db/hidden-schemas/orderitems");
 
 /**
  * Order Router
- * @param {router} app 
- * @param {import("../loaders/mongodb").MongoService} MongoDB 
+ * @param {router} app
+ * @param {import("../loaders/mongodb").MongoService} MongoDB
  */
 module.exports = (app, MongoDB) => {
     app.use("/api/order", router);
@@ -28,8 +28,18 @@ module.exports = (app, MongoDB) => {
     });
 
     router.get("/", async (req, res, next) => {
+        let userid = req.tokenData.userid;
+        // adminBody is used to allow admins to change the find params
+        if (req.tokenData.admin && req.body.adminBody) {
+            userid = req.body.adminBody.userid // * implies get all so undefined
+                ? req.body.adminBody.userid === "*"
+                    ? undefined
+                    : req.body.adminBody.userid
+                : userid;
+        }
+
         try {
-            const orders = await MongoDB.services.order.findOrdersByUser(req.tokenData.userid);
+            const orders = await MongoDB.services.order.findMany({ userid });
             if (!orders || orders.length <= 0) {
                 return res.status(404).send("Orders not found");
             }
@@ -42,4 +52,4 @@ module.exports = (app, MongoDB) => {
     router.get("/:orderid", (req, res, next) => {
         res.status(200).send(req.order);
     });
-}
+};
