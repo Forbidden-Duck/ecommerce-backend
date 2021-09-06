@@ -193,7 +193,7 @@ module.exports = (app, MongoDB) => {
                 _id: req.cart._id,
                 items: req.cart.items,
             });
-            res.sendStatus(200).send({
+            res.status(200).send({
                 cart,
                 cartitem: cart.items[req.cartitem._id],
             });
