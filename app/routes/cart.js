@@ -70,7 +70,7 @@ module.exports = (app, MongoDB) => {
             userid = req.body.adminBody.userid || userid;
         }
         const cart = await MongoDB.services.cart.find({ userid });
-        if (cart._id !== undefined) {
+        if (cart && cart._id !== undefined) {
             return res.status(409).send("Cart already exists");
         }
 
@@ -127,7 +127,7 @@ module.exports = (app, MongoDB) => {
             });
             res.status(201).send({
                 cart,
-                cartItem: cartItemObj,
+                cartitem: cart.items[cartItemObj._id],
             });
         } catch (err) {
             res.status(err.status || 500).send(err.message);
@@ -165,7 +165,7 @@ module.exports = (app, MongoDB) => {
             });
             res.status(200).send({
                 cart,
-                cartItem,
+                cartitem: cart.items[req.cartitem._id],
             });
         } catch (err) {
             res.status(err.status || 500).send(err.message);
@@ -189,11 +189,14 @@ module.exports = (app, MongoDB) => {
                 (item) => item._id !== req.cartitem._id
             );
 
-            await MongoDB.services.cart.update({
+            const cart = await MongoDB.services.cart.update({
                 _id: req.cart._id,
                 items: req.cart.items,
             });
-            res.sendStatus(200);
+            res.sendStatus(200).send({
+                cart,
+                cartitem: cart.items[req.cartitem._id],
+            });
         } catch (err) {
             res.status(err.status || 500).send(err.message);
         }
