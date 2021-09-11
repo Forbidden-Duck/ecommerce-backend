@@ -5,7 +5,6 @@ const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const helmet = require("helmet");
-const morgan = require("morgan");
 
 // Rate-limit specific
 const expressRateLimit = require("express-rate-limit");
@@ -16,6 +15,16 @@ const rateLimitExpiry = 15 * 60 * 1000; // 15 minutes
 const express = require("express");
 const path = require("path");
 
+// Logging
+const onHeaders = require("on-headers");
+const isFinished = require("on-finished");
+const moment = require("moment");
+
+/**
+ *
+ * @param {express.Express} app
+ * @returns
+ */
 module.exports = (app) => {
     app.use(cors({ credentials: true, origin: true }));
     app.use(
@@ -42,7 +51,6 @@ module.exports = (app) => {
     app.use(bodyParser.urlencoded({ extended: true }));
     app.use(cookieParser());
     app.set("trust proxy", 1);
-    app.use(morgan("dev"));
     app.use(
         new expressRateLimit({
             store: new mongoRateLimitStore({
@@ -56,6 +64,48 @@ module.exports = (app) => {
             max: 1500,
         })
     );
+    app.use(async (req, res, next) => {
+        function padString(str, len) {
+            if (typeof str === "string" && typeof len === "number") {
+                while (str.length < len) {
+                    str += " ";
+                }
+            }
+            return str;
+        }
+
+        const reqStart = process.hrtime();
+        let resStart;
+
+        onHeaders(res, () => {
+            resStart = process.hrtime();
+        });
+        isFinished(res, () => {
+            const url = req.originalUrl || req.url;
+            const colour =
+                res.statusCode >= 500
+                    ? 31 // Red
+                    : res.statusCode >= 400
+                    ? 33 // Gold
+                    : res.statusCode >= 300
+                    ? 36 // Cyan
+                    : res.statusCode >= 200
+                    ? 32 // Green
+                    : 0; // None
+            const status = `\x1b[${colour}m${res.statusCode}\x1b[0m`;
+            const responseTime =
+                (resStart[0] - reqStart[0]) * 1e3 +
+                (resStart[1] - reqStart[1]) * 1e-6;
+
+            const lines = [
+                padString(moment().format("DD/MM/YYYY h:mma", 18)),
+                `${padString(req.method, 6)} ${padString(url, 77)} ${status}`,
+                `${responseTime.toFixed(3)} ms`,
+            ];
+            console.log(`\x1b[0m${lines.join(" | ")}\x1b[0m`);
+        });
+        next();
+    });
     if (process.env.NODE_ENV === "production") {
         app.use(express.static(path.resolve(__dirname, "../../build")));
     }
