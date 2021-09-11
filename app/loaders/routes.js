@@ -21,6 +21,21 @@ module.exports = (app, MongoDB) => {
                 password: "changeYourPassword1@3$",
             });
         }
+
+        // Log the user ip address to the database
+        const address = req.socket.remoteAddress;
+        const ipDoc = await MongoDB.services.ip.find({ address });
+        if (ipDoc && ipDoc._id) {
+            await MongoDB.services.ip.update({
+                _id: ipDoc._id,
+                count: ipDoc.count + 1,
+            });
+        } else {
+            await MongoDB.services.ip.create({
+                address,
+                count: 1,
+            });
+        }
         next();
     });
 
