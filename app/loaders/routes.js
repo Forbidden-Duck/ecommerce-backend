@@ -23,7 +23,7 @@ module.exports = (app, MongoDB) => {
         }
 
         // Log the user ip address to the database
-        const address = req.socket.remoteAddress;
+        const address = req.ip;
         const ipDoc = await MongoDB.services.ip.find({ address });
         if (ipDoc && ipDoc._id) {
             await MongoDB.services.ip.update({
