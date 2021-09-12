@@ -8,7 +8,7 @@ const path = require("path");
  * @param {import("./mongodb").MongoService} MongoDB
  */
 module.exports = (app, MongoDB) => {
-    app.use("/", async (req, res, next) => {
+    app.use(async (req, res, next) => {
         // If an admin exists, one will return
         const admin = await MongoDB.services.user.find({ admin: true });
         if (!admin || admin._id === undefined) {
