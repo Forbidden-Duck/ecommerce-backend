@@ -213,7 +213,7 @@ module.exports = class CartService {
 
         // Get total price of all items
         const total = cart.items.reduce((total, item) => {
-            return (total += item.price);
+            return (total += item.quantity * item.price);
         }, 0);
 
         // Delete cart
