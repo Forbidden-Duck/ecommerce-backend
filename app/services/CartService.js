@@ -243,7 +243,6 @@ module.exports = class CartService {
                 source: paymentInfo.id,
                 description: "Ecommerce Charge",
             });
-            console.log(charge);
         } catch (err) {
             status = "FAILED";
             charge = err.message;
