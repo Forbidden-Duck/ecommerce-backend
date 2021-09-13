@@ -31,8 +31,12 @@ module.exports = (app) => {
         helmet({
             contentSecurityPolicy: {
                 directives: {
-                    defaultSrc: ["'self'"],
-                    scriptSrc: ["'self'", "https://apis.google.com"],
+                    defaultSrc: ["'self'", "https://fonts.googleapis.com"],
+                    scriptSrc: [
+                        "'self'",
+                        "https://apis.google.com",
+                        "https://js.stripe.com",
+                    ],
                     styleSrc: [
                         "'self'",
                         "https://fonts.googleapis.com",
@@ -42,7 +46,11 @@ module.exports = (app) => {
                     fontSrc: ["'self'", "https://fonts.gstatic.com"],
                     objectSrc: ["'self'"],
                     mediaSrc: ["'self'"],
-                    frameSrc: ["https://accounts.google.com/"],
+                    frameSrc: [
+                        "https://accounts.google.com/",
+                        "https://js.stripe.com",
+                    ],
+                    connectSrc: ["'self'", "https://fonts.googleapis.com"],
                 },
             },
         })
