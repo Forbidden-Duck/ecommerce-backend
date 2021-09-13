@@ -8,16 +8,16 @@ module.exports = {
         host: process.env.DBHOST,
         auth: {
             username: process.env.DBUSERNAME,
-            password: process.env.DBPASSWORD
-        }
+            password: process.env.DBPASSWORD,
+        },
     },
-    STRIPE: process.env.SKSECRET,
+    STRIPE: process.env.PKSECRET,
     CRYPTO: {
         cfg: {
             keySize: 512 / 32,
             iterations: 10000,
-            mode: CryptoJS.mode.OFB
+            mode: CryptoJS.mode.OFB,
         },
-        jwtkey: process.env.JWTKEY
-    }
+        jwtkey: process.env.JWTKEY,
+    },
 };
