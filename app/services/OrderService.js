@@ -115,7 +115,7 @@ module.exports = class OrderService {
      */
     async update(orderObj) {
         // Check if order exists
-        const order = await this.find({ _id: orderID });
+        const order = await this.find({ _id: orderObj._id });
         if (!order || order._id === undefined) {
             throw createError(404, "Order not found");
         }
