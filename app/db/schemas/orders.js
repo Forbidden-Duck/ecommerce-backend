@@ -5,6 +5,7 @@
  * @property {string} [status]
  * @property {number} [total]
  * @property {OrderItem[]} [items]
+ * @property {object} [payment]
  * @property {string} [createdAt]
  * @property {string} [modifiedAt]
  */
@@ -28,6 +29,7 @@ module.exports = {
     status: undefined,
     total: 0,
     items: [],
+    payment: undefined,
     createdAt: undefined,
     modifiedAt: undefined,
 };
