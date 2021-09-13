@@ -238,7 +238,7 @@ module.exports = class CartService {
         let charge;
         try {
             charge = await stripe.charges.create({
-                amount: parseInt(total.toFixed(2)),
+                amount: total * 100,
                 currency: "usd",
                 source: paymentInfo.id,
                 description: "Ecommerce Charge",
