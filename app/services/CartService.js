@@ -11,6 +11,13 @@ const OrderService = require("./OrderService");
 const UserService = require("./UserService");
 const ProductService = require("./ProductService");
 
+// Initialise Stripe
+const { STRIPE } = require("../../config");
+/**
+ * @type {import "stripe".Stripe}
+ */
+const stripe = require("stripe")(STRIPE);
+
 /**
  * @typedef {object} checkout
  * @property {OrderSchema} orders
@@ -181,10 +188,10 @@ module.exports = class CartService {
     /**
      * Cart checkout
      * @param {string} cartID
+     * @param {object} paymentInfo
      * @returns {checkout}
      */
-    async checkout(cartID) {
-        // TODO Add stripe
+    async checkout(cartID, paymentInfo) {
         // Check if the cart exists
         const cart = await this.find({ _id: cartID });
         if (!cart || cart._id === undefined) {
@@ -216,6 +223,7 @@ module.exports = class CartService {
         }
 
         // Create order
+        let status = "PROCESSING";
         /**
          * @type {OrderSchema}
          */
@@ -223,15 +231,42 @@ module.exports = class CartService {
             userid: cart.userid,
             total: total,
             items: cart.items,
-            status: "COMPLETED",
+            status,
         };
-        const order = await this.OrderService.create(orderObj);
+        const orderCreated = await this.OrderService.create(orderObj);
 
-        // Make the charge to the user
-        const charge = "Not available"; // Stripe not connected yet
+        let charge;
+        try {
+            charge = await stripe.charges.create({
+                amount: parseInt(total.toFixed(2)),
+                currency: "usd",
+                source: paymentInfo.id,
+                description: "Ecommerce Charge",
+            });
+            console.log(charge);
+        } catch (err) {
+            status = "FAILED";
+            charge = err.message;
+        }
+        if (charge) {
+            switch (charge.status) {
+                case "succeeded":
+                    status = "SUCCESS";
+                    break;
+                default:
+                    status = "FAILED";
+                    break;
+            }
+        }
+        const order = await this.OrderService.update({
+            _id: orderCreated._id,
+            status,
+            payment: charge,
+        });
+
         return {
             order,
-            charge: charge,
+            charge,
         };
     }
 };

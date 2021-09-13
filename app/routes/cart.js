@@ -206,9 +206,16 @@ module.exports = (app, MongoDB) => {
         if (req.tokenData.userid !== req.cart.userid) {
             return res.status(403).send("Can't checkout other user's carts");
         }
+        const body = sanitize(req.body);
+        if (!body.paymentInfo) {
+            return res.status(400).send("Missing payment info");
+        }
 
         try {
-            const checkout = await MongoDB.services.cart.checkout(req.cart._id);
+            const checkout = await MongoDB.services.cart.checkout(
+                req.cart._id,
+                body.paymentInfo
+            );
             res.status(201).send(checkout);
         } catch (err) {
             res.status(err.status || 500).send(err.message);
