@@ -11,7 +11,7 @@ module.exports = {
             password: process.env.DBPASSWORD,
         },
     },
-    STRIPE: process.env.PKSECRET,
+    STRIPE: process.env.SKSECRET,
     CRYPTO: {
         cfg: {
             keySize: 512 / 32,
