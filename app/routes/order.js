@@ -29,7 +29,6 @@ module.exports = (app, MongoDB) => {
 
     router.get("/", async (req, res, next) => {
         let data = { userid: req.tokenData.userid };
-        // adminBody is used to allow admins to change the find params
         if (req.tokenData.admin && req.query.userid) {
             if (req.query.userid === "*") {
                 delete data.userid;
