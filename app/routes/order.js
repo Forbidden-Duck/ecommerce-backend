@@ -50,6 +50,9 @@ module.exports = (app, MongoDB) => {
     });
 
     router.get("/:orderid", (req, res, next) => {
+        if (req.tokenData.userid !== req.order.userid && !req.tokenData.admin) {
+            return res.status(403).send("You can not view other user's orders");
+        }
         res.status(200).send(req.order);
     });
 };
