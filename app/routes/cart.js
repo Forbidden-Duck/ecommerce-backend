@@ -45,17 +45,17 @@ module.exports = (app, MongoDB) => {
     });
 
     router.get("/", async (req, res, next) => {
-        let userid = req.tokenData.userid;
+        let data = { userid: req.tokenData.userid };
         // adminBody is used to allow admins to change the find params
-        if (req.tokenData.admin && req.body.adminBody) {
-            userid = req.body.adminBody.userid // * implies get all so undefined
-                ? req.body.adminBody.userid === "*"
-                    ? undefined
-                    : req.body.adminBody.userid
-                : userid;
+        if (req.tokenData.admin && req.query.userid) {
+            if (req.query.userid === "*") {
+                delete data.userid;
+            } else {
+                data.userid = req.query.userid || data.userid;
+            }
         }
         try {
-            const carts = await MongoDB.services.cart.findMany({ userid });
+            const carts = await MongoDB.services.cart.findMany(data);
             res.status(200).send(carts);
         } catch (err) {
             res.status(err.status || 500).send(err.message);
