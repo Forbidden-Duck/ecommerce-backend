@@ -193,14 +193,6 @@ module.exports = class AuthService {
      * @returns {LoginReturn}
      */
     async refresh_token(refreshTokenObj) {
-        // Check if the user exists
-        const user = await this.UserService.find({
-            _id: refreshTokenObj.userid,
-        });
-        if (!user || user._id === undefined) {
-            throw createError(404, "User not found");
-        }
-
         // Delete refresh token
         try {
             await this.MongoDB.delete("refresh_tokens", {
@@ -209,6 +201,14 @@ module.exports = class AuthService {
             });
         } catch (err) {
             throw createError(500, "Internal Server Error");
+        }
+
+        // Check if the user exists
+        const user = await this.UserService.find({
+            _id: refreshTokenObj.userid,
+        });
+        if (!user || user._id === undefined) {
+            throw createError(404, "User not found");
         }
 
         // Create new token, refresh token and expiry
