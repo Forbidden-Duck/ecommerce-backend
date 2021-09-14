@@ -140,6 +140,11 @@ module.exports = (app, MongoDB) => {
             reTokenCookie
         );
         if (!reTokenDB || reTokenDB._id === undefined) {
+            // Ensure to delete the refresh-token
+            res.cookie("refresh_token", "", {
+                maxAge: 0,
+                expires: new Date(0),
+            });
             return res.sendStatus(401);
         }
         req.refresh_token = reTokenDB;
@@ -166,6 +171,11 @@ module.exports = (app, MongoDB) => {
                 refreshtoken: refreshObj.refreshtoken,
             });
         } catch (err) {
+            // Ensure to delete the refresh-token
+            res.cookie("refresh_token", "", {
+                maxAge: 0,
+                expires: new Date(0),
+            });
             return res.status(err.status || 500).send(err.message);
         }
     });
