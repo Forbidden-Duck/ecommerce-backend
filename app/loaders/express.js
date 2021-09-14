@@ -106,7 +106,7 @@ module.exports = (app) => {
                 (resStart[1] - reqStart[1]) * 1e-6;
 
             const lines = [
-                padString(moment().format("DD/MM/YYYY h:mma"), 19),
+                padString(moment().format("DD/MM/YYYY h:mma"), 18),
                 `${padString(req.method, 6)} ${padString(url, 83)} ${status}`,
                 `${responseTime.toFixed(3)} ms`,
             ];
